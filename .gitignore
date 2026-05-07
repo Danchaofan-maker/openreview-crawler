@@ -12,3 +12,4 @@ outputs/
 # 编辑器
 .vscode/
 .idea/
+.env
