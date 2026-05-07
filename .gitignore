@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# 数据文件不进 git（体积大）
+data/raw/
+data/processed/
+outputs/
+
+# 编辑器
+.vscode/
+.idea/
