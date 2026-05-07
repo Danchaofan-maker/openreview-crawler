@@ -1,0 +1,208 @@
+{
+  "source": "data/raw/*.jsonl",
+  "n_population": 30983,
+  "seed": 42,
+  "n": 20,
+  "samples": [
+    {
+      "paper_id": "83pV20DD2s",
+      "venue": "NeurIPS_2024",
+      "year": 2024,
+      "title": "Learning from Pattern Completion: Self-supervised Controllable Generation",
+      "authors": "Zhiqiang Chen; Guofan Fan; Jinying Gao; Lei Ma; Bo Lei; Tiejun Huang; Shan Yu",
+      "abstract": "The human brain exhibits a strong ability to spontaneously associate different visual attributes of the same or similar visual scene, such as associating sketches and graffiti with real-world visual objects, usually without supervising information. In contrast, in the field of artificial intelligence, controllable generation methods like ControlNet heavily rely on annotated training datasets such as depth maps, semantic segmentation maps, and poses, which limits the method’s scalability. Inspired by the neural mechanisms that may contribute to the brain’s associative power, specifically the cortical modularization and hippocampal pattern completion, here we propose a self-supervised controllable generation (SCG) framework. Firstly, we introduce an equivariance constraint to promote inter-module independence and intra-module correlation in a modular autoencoder network, thereby achieving functional specialization. Subsequently, based on these specialized modules, we employ a self-supervised pattern completion approach for controllable generation training. Experimental results demonstrate that the proposed modular autoencoder effectively achieves functional specialization, including the modular processing of color, brightness, and edge detection, and exhibits brain-like features including orientation selectivity, color antagonism, and center-surround receptive fields. Through self-supervised training, associative generation capabilities spontaneously emerge in SCG, demonstrating excellent zero-shot generalization ability to various tasks such as superresolution, dehaze and associative or conditional generation on painting, sketches, and ancient graffiti. Compared to the previous representative method ControlNet, our proposed approach not only demonstrates superior robustness in more challenging high-noise scenarios but also possesses more promising scalability potential due to its self-supervised manner. Codes are released on Github and Gitee.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "IxmWIkcKs5",
+      "venue": "ICLR_2025",
+      "year": 2025,
+      "title": "A Simple yet Effective $\\Delta\\Delta G$ Predictor is An Unsupervised Antibody Optimizer and Explainer",
+      "authors": "Lirong Wu; Yunfan Liu; Haitao Lin; Yufei Huang; Guojiang Zhao; Zhifeng Gao; Stan Z. Li",
+      "abstract": "The proteins that exist today have been optimized over billions of years of natural evolution, during which nature creates random mutations and selects them. The discovery of functionally promising mutations is challenged by the limited evolutionary accessible regions, i.e., only a small region on the fitness landscape is beneficial. There have been numerous priors used to constrain protein evolution to regions of landscapes with high-fitness variants, among which the change in binding free energy ($\\Delta\\Delta G$) of protein complexes upon mutations is one of the most commonly used priors. However, the huge mutation space poses two challenges: (1) how to improve the efficiency of $\\Delta\\Delta G$ prediction for fast mutation screening; and (2) how to explain mutation preferences and efficiently explore accessible evolutionary regions. To address these challenges, we propose a lightweight $\\Delta\\Delta G$ predictor (Light-DDG), which adopts a structure-aware Transformer as the backbone and enhances it by knowledge distilled from existing powerful but computationally heavy $\\Delta\\Delta G$ predictors. Additionally, we augmented, annotated, and released a large-scale dataset containing millions of mutation data for pre-training Light-DDG. We find that such a simple yet effective Light-DDG can serve as a good unsupervised antibody optimizer and explainer. For the target antibody, we propose a novel Mutation Explainer to learn mutation preferences, which accounts for the marginal benefit of each mutation per residue. To further explore accessible evolutionary regions, we conduct preference-guided antibody optimization and evaluate antibody candidates quickly using Light-DDG to identify desirable mutations. Extensive experiments have demonstrated the effectiveness of Light-DDG in terms of test generalizability, noise robustness, and inference practicality, e.g., 89.7$\\times$ inference acceleration and 15.45\\% performance gains over previous state-of-the-art baselines. A case study of SARS-CoV-2 further demonstrates the crucial role of Light-DDG for mutation explanation and antibody optimization.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "Ts95eXsPBc",
+      "venue": "ICLR_2024",
+      "year": 2024,
+      "title": "Spatially-Aware Transformers for Embodied Agents",
+      "authors": "Junmo Cho; Jaesik Yoon; Sungjin Ahn",
+      "abstract": "Episodic memory plays a crucial role in various cognitive processes, such as the ability to mentally recall past events. While cognitive science emphasizes the significance of spatial context in the formation and retrieval of episodic memory, the current primary approach to implementing episodic memory in AI systems is through transformers that store temporally ordered experiences, which overlooks the spatial dimension. As a result, it is unclear how the underlying structure could be extended to incorporate the spatial axis beyond temporal order alone and thereby what benefits can be obtained. To address this, this paper explores the use of Spatially-Aware Transformer models that incorporate spatial information. These models enable the creation of place-centric episodic memory that considers both temporal and spatial dimensions. Adopting this approach, we demonstrate that memory utilization efficiency can be improved, leading to enhanced accuracy in various place-centric downstream tasks. Additionally, we propose the Adaptive Memory Allocator, a memory management method based on reinforcement learning that aims to optimize efficiency of memory utilization. Our experiments demonstrate the advantages of our proposed model in various environments and across multiple downstream tasks, including prediction, generation, reasoning, and reinforcement learning. The source code for our models and experiments will be available at \\href{https://github.com/spatially_aware_transformer}{https://github.com/spatially_aware_transformer}.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "UpzRoxVbQD",
+      "venue": "NeurIPS_2025",
+      "year": 2025,
+      "title": "Tight Bounds on the Distortion of Randomized and Deterministic Distributed Voting",
+      "authors": "Mohammad Abam; Davoud Kareshki; Marzie Nilipour; MohammadHossein Paydar; Masoud Seddighin",
+      "abstract": "We study metric distortion in distributed voting, where $n$ voters are partitioned into $k$ groups, each selecting a local representative, and a final winner is chosen from these representatives (or from the entire set of candidates). This setting models systems like U.S. presidential elections, where state-level decisions determine the national outcome. We focus on four cost objectives from Anshelevich \\et~\\cite{anshelevich2022distortion}: $\\avgavg$, $\\avgmax$, $\\maxavg$, and $\\maxmax$. We present improved distortion bounds for both deterministic and randomized mechanisms, offering a near-complete characterization of distortion in this model.\n\nFor deterministic mechanisms, we reduce the upper bound for $\\avgmax$ from $11$ to $7$, establish a tight lower bound of $5$ for $\\maxavg$ (improving on $2+\\sqrt{5}$), and tighten the upper bound for $\\maxmax$ from $5$ to $3$.\nFor randomized mechanisms, we consider two settings: (i) only the second stage is randomized, and (ii) both stages may be randomized. In case (i), we prove tight bounds: $5\\!-\\!2/k$ for $\\avgavg$, $3$ for $\\avgmax$ and $\\maxmax$, and $5$ for $\\maxavg$. In case (ii), we show tight bounds of $3$ for $\\maxavg$ and $\\maxmax$, and nearly tight bounds for $\\avgavg$ and $\\avgmax$ within $[3\\!-\\!2/n,\\ 3\\!-\\!2/(kn^*)]$ and $[3\\!-\\!2/n,\\ 3]$, respectively, where $n^*$ denotes the largest group size.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "iFPUEBwwuT",
+      "venue": "ICLR_2026",
+      "year": 2026,
+      "title": "Topology-Preserved Auto-regressive Mesh Generation in the Manner of Weaving Silk",
+      "authors": "Gaochao Song; Zibo Zhao; Haohan Weng; Jingbo Zeng; Rongfei Jia; Shenghua Gao",
+      "abstract": "Existing auto-regressive mesh generation approaches suffer from ineffective topology preservation, which is crucial for practical applications. \nThis limitation stems from previous mesh tokenization methods treating meshes as simple collections of equivalent triangles, lacking awareness of the overall topological structure during generation. To address this issue, we propose a novel mesh tokenization algorithm that provides a canonical topological framework through vertex layering and ordering, ensuring critical geometric properties including manifoldness, watertightness, face normal consistency, and part awareness in the generated meshes. Measured by Compression Ratio and Bits-per-face, we also achieved state-of-the-art compression efficiency. Furthermore, we introduce an online non-manifold data processing algorithm and a training resampling strategy to expand the scale of trainable dataset and avoid costly manual data curation.\nExperimental results demonstrate the effectiveness of our approach, showcasing not only intricate mesh generation but also significantly improved geometric integrity.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "VhlSBZebEw",
+      "venue": "ICLR_2026",
+      "year": 2026,
+      "title": "A-TPT: Angular Diversity Calibration Properties for Test-Time Prompt Tuning of Vision-Language Models",
+      "authors": "Shihab Aaqil Ahamed; Udaya Sampath K. Perera Miriya Thanthrige; Ranga Rodrigo; Muhammad Haris Khan",
+      "abstract": "Test-time prompt tuning (TPT) has emerged as a promising technique for adapting large vision-language models (VLMs) to unseen tasks without relying on labeled data. However, the lack of dispersion between textual features can hurt calibration performance, which raises concerns about VLMs' reliability, trustworthiness, and safety. Current TPT approaches primarily focus on improving prompt calibration by either maximizing average textual feature dispersion or enforcing orthogonality constraints to encourage angular separation. However, these methods may not always have optimal angular separation between class-wise textual features, which implies overlooking the critical role of angular diversity. To address this, we propose A-TPT, a novel TPT framework that introduces angular diversity to encourage uniformity in the distribution of normalized textual features induced by corresponding learnable prompts. This uniformity is achieved by maximizing the minimum pairwise angular distance between features on the unit hypersphere. We show that our approach consistently surpasses state-of-the-art TPT methods in reducing the aggregate average calibration error while maintaining comparable accuracy through extensive experiments with various backbones on different datasets. Notably, our approach exhibits superior zero-shot calibration performance on natural distribution shifts and generalizes well to medical datasets. We provide extensive analyses, including theoretical aspects, to establish the grounding of A-TPT. These results highlight the potency of promoting angular diversity to achieve well-dispersed textual features, significantly improving VLM calibration during test-time adaptation. Our code is available at https://github.com/MB-Shihab-Aaqil-Ahamed/A-TPT/.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "5d7prMWHNF",
+      "venue": "ICLR_2026",
+      "year": 2026,
+      "title": "Learning Robust Intervention Representations with Delta Embeddings",
+      "authors": "Panagiotis Alimisis; Christos Diou",
+      "abstract": "Causal representation learning has attracted significant research interest during the past few years, as a means for improving model generalization and robustness. Causal representations of interventional image pairs (also called ``actionable counterfactuals'' in the literature), have the property that only variables corresponding to scene elements affected by the intervention / action are changed between the start state and the end state. While most work in this area has focused on identifying and representing the variables of the scene under a causal model, fewer efforts have focused on representations of the interventions themselves. In this work, we show that an effective strategy for improving out of distribution (OOD) robustness is to focus on the representation of actionable counterfactuals in the latent space.  Specifically, we propose that an intervention can be represented by a Causal Delta Embedding that is invariant to the visual scene and sparse in terms of the causal variables it affects. Leveraging this insight, we propose a method for learning causal representations from image pairs, without any additional supervision. Experiments in the Causal Triplet challenge demonstrate that Causal Delta Embeddings are highly effective in OOD settings, significantly exceeding baseline performance in both synthetic and real-world benchmarks.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "GSUNPIw7Ad",
+      "venue": "ICLR_2025",
+      "year": 2025,
+      "title": "Bridging Compressed Image Latents and Multimodal Large Language Models",
+      "authors": "Chia-Hao Kao; Cheng Chien; Yu-Jen Tseng; Yi-Hsin Chen; Alessandro Gnutti; Shao-Yuan Lo; Wen-Hsiao Peng; Riccardo Leonardi",
+      "abstract": "This paper presents the first-ever study of adapting compressed image latents to suit the needs of downstream vision tasks that adopt Multimodal Large Language Models (MLLMs). MLLMs have extended the success of large language models to modalities (e.g. images) beyond text, but their billion scale hinders deployment on resource-constrained end devices. While cloud-hosted MLLMs could be available, transmitting raw, uncompressed images captured by end devices to the cloud requires an efficient image compression system. To address this, we focus on emerging neural image compression and propose a novel framework with a lightweight transform-neck and a surrogate loss to adapt compressed image latents for MLLM-based vision tasks. \nGiven the huge scale of MLLMs, our framework excludes the entire downstream MLLM except part of its visual encoder from training our system. This stands out from most existing coding for machine approaches that involve downstream networks in training and thus could be impractical when the networks are MLLMs. The proposed framework is general in that it is applicable to various MLLMs, neural image codecs, and multiple application scenarios, where the neural image codec can be (1) pre-trained for human perception without updating, (2) fully updated for joint human and machine perception, or (3) fully updated for only machine perception. \nExtensive experiments on different neural image codecs and various MLLMs show that our method achieves great rate-accuracy performance with much less complexity.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "4E3I17pNEl",
+      "venue": "NeurIPS_2025",
+      "year": 2025,
+      "title": "Yggdrasil: Bridging Dynamic Speculation and Static Runtime  for Latency-Optimal Tree-Based LLM Decoding",
+      "authors": "Yue Guan; Changming Yu; Shihan Fang; Weiming Hu; Zaifeng Pan; Zheng Wang; Zihan Liu; Yangjie Zhou; Yufei Ding; Minyi Guo; Jingwen Leng",
+      "abstract": "Speculative decoding improves LLM inference by generating and verifying multiple tokens in parallel, but existing systems suffer from suboptimal performance due to a mismatch between dynamic speculation and static runtime assumptions. We present Yggdrasil, a co-designed system that enables latency-optimal speculative decoding through context-aware tree drafting and compiler-friendly execution. Yggdrasil introduces an equal-growth tree structure for static graph compatibility, a latency-aware optimization objective for draft selection, and stage-based scheduling to reduce overhead. Yggdrasil supports unmodified LLMs and achieves up to $3.98\\times$ speedup over state-of-the-art baselines across multiple hardware setups.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "aSy2nYwiZ2",
+      "venue": "ICLR_2025",
+      "year": 2025,
+      "title": "Injecting Universal Jailbreak Backdoors into LLMs in Minutes",
+      "authors": "Zhuowei Chen; Qiannan Zhang; Shichao Pei",
+      "abstract": "Jailbreak backdoor attacks on LLMs have garnered attention for their effectiveness and stealth. However, existing methods rely on the crafting of poisoned datasets and the time-consuming process of fine-tuning. In this work, we propose JailbreakEdit, a novel jailbreak backdoor injection method that exploits model editing techniques to inject a universal jailbreak backdoor into safety-aligned LLMs with minimal intervention *in minutes*. JailbreakEdit integrates a multi-node target estimation to estimate the jailbreak space, thus creating shortcuts from the backdoor to this estimated jailbreak space that induce jailbreak actions. Our attack effectively shifts the models' attention by attaching strong semantics to the backdoor, enabling it to bypass internal safety mechanisms. Experimental results show that JailbreakEdit achieves a high jailbreak success rate on jailbreak prompts while preserving generation quality, and safe performance on normal queries. Our findings underscore the effectiveness, stealthiness, and explainability of JailbreakEdit, emphasizing the need for more advanced defense mechanisms in LLMs.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "4M9f8VMt2C",
+      "venue": "NeurIPS_2024",
+      "year": 2024,
+      "title": "Long-form factuality in large language models",
+      "authors": "Jerry Wei; Chengrun Yang; Xinying Song; Yifeng Lu; Nathan Zixia Hu; Jie Huang; Dustin Tran; Daiyi Peng; Ruibo Liu; Da Huang; Cosmo Du; Quoc V Le",
+      "abstract": "Large language models (LLMs) often generate content that contains factual errors when responding to fact-seeking prompts on open-ended topics. To benchmark a model’s long-form factuality in open domains, we first use GPT-4 to generate LongFact, a prompt set comprising thousands of questions spanning 38 topics. We then propose that LLM agents can be used as automated evaluators for long-form factuality through a method which we call Search-Augmented Factuality Evaluator (SAFE). SAFE utilizes an LLM to break down a long-form response into a set of individual facts and to evaluate the accuracy of each fact using a multi-step reasoning process comprising sending search queries to Google Search and determining whether a fact is supported by the search results. Furthermore, we propose extending F1 score as an aggregated metric for long-form factuality. To do so, we balance the percentage of supported facts in a response (precision) with the percentage of provided facts relative to a hyperparameter representing a user’s preferred response length (recall).\n\nEmpirically, we demonstrate that LLM agents can outperform crowdsourced human annotators—on a set of∼16k individual facts, SAFE agrees with crowdsourced human annotators 72% of the time, and on a random subset of 100 disagreement cases, SAFE wins 76% of the time. At the same time, SAFE is more than 20 times cheaper than human annotators.  We also benchmark thirteen language models on LongFact across four model families (Gemini, GPT, Claude, and PaLM-2), finding that larger language models generally achieve better long-form factuality. LongFact, SAFE, and all experimental code are available at https://github.com/google-deepmind/long-form-factuality.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "HOa6LTIjyn",
+      "venue": "NeurIPS_2025",
+      "year": 2025,
+      "title": "Prediction-Powered Causal Inferences",
+      "authors": "Riccardo Cadei; Ilker Demirel; Piersilvio De Bartolomeis; Lukas Lindorfer; Sylvia Cremer; Cordelia Schmid; Francesco Locatello",
+      "abstract": "In many scientific experiments, the data annotating cost constraints the pace for testing novel hypotheses. Yet, modern machine learning pipelines offer a promising solution—provided their predictions yield correct conclusions. We focus on Prediction-Powered Causal Inferences (PPCI), i.e., estimating the treatment effect in an unlabeled target experiment, relying on training data with the same outcome annotated but potentially different treatment or effect modifiers. We first show that conditional calibration guarantees valid PPCI at population level. Then, we introduce a sufficient representation constraint transferring validity across experiments,  which we propose to enforce in practice in Deconfounded Empirical Risk Minimization, our new model-agnostic training objective. We validate our method on synthetic and real-world scientific data, solving impossible problem instances for Empirical Risk Minimization even with standard invariance constraints. In particular, for the first time, we achieve valid causal inference on a scientific experiment with complex recording and no human annotations, fine-tuning a foundational model on our similar annotated experiment.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "WzS33L1iPC",
+      "venue": "TMLR",
+      "year": 2025,
+      "title": "Visually Descriptive Language Model for Vector Graphics Reasoning",
+      "authors": "Zhenhailong Wang; Joy Hsu; Xingyao Wang; Kuan-Hao Huang; Manling Li; Jiajun Wu; Heng Ji",
+      "abstract": "Despite significant advancements, current large multimodal models (LMMs) struggle to bridge the gap between low-level visual perception—focusing on shapes, sizes, and layouts—and high-level language reasoning involving semantics, events, and logic. This limitation becomes evident in tasks requiring precise visual perception, such as comparing geometric properties or solving visual algorithmic reasoning problems. To study this failure mode, we focus on an important visual domain: vector graphics —images composed purely of 2D objects and shapes, which are prevalent in Web, PC, and Mobile environments. Importantly, we consider rasterized vector graphics without assuming access to their underlying vector code. We identify two key research questions: how can we enable precise visual perception, and how can we facilitate high-level reasoning based on such low-level perceptions? To accurately capture low-level visual details, we explore using SVG for the precise encoding of visual scenes. However, SVGs are not readily interpretable by LLMs or LMMs in a zero-shot manner. To address this challenge, we propose the Visually Descriptive Language Model (VDLM) to build a bridge between low-level visual perception and high-level language reasoning. VDLM learns an intermediate symbolic representation called Primal Visual Description (PVD), which translates raw SVGs into a higher-level abstraction comprising primitive attributes. This abstraction allows for direct interpretation by foundation models for zero-shot generalization to different reasoning tasks. Without any human-annotated data, VDLM leads to significant improvements in state-of-the-art LMMs, such as GPT-4o, across various low-level multimodal perception and reasoning tasks on rasterized vector graphics. Additionally, we provide extensive analyses of VDLM’s performance, showing that our framework offers improved interpretability due to its disentangled perception and reasoning processes. As the first attempt to construct a descriptive intermediate representation for low-level visual reasoning, we also conduct an in-depth error analysis, highlighting remaining limitations and suggesting directions for future research.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "jmlr-v25-23-0834",
+      "venue": "JMLR",
+      "year": 2024,
+      "title": "A Note on Entrywise Consistency for Mixed-data Matrix Completion",
+      "authors": "Yunxiao Chen; Xiaoou Li",
+      "abstract": "This note studies matrix completion for a partially observed $n$ by $p$ data matrix involving mixed types of variables (e.g., continuous, binary, ordinal). A general family of non-linear factor models is considered, under which the matrix completion problem becomes the estimation of  an $n$ by $p$ low-rank matrix ${\\mathbf M}$. For existing methods in the literature, estimation consistency is established by showing $\\Vert \\hat {\\mathbf M} - {\\mathbf M}^*\\Vert_F/\\sqrt{np}$, the scaled Frobenius norm of the difference between the estimated and true ${\\mathbf M}$ matrices, converges to zero in probability as $n$ and $p$ grow to infinity. However, this notion of consistency does not guarantee the convergence of each individual entry and, thus, may not be sufficient when specific data entries or the worst-case scenario is of interest. To address this issue, we consider the notion of entrywise consistency based on $\\Vert \\hat {\\mathbf M} - {\\mathbf M}^* \\Vert_{\\mbox{max}}$, the max norm of the estimation error matrix. We propose refinement procedures that turn estimators, which are consistent in the Frobenius norm sense, into entrywise estimators through a one-step refinement.\r\nTight probabilistic error bounds are derived for the proposed estimators. The proposed methods are evaluated by simulation studies and real-data applications for collaborative filtering and large-scale educational assessment.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "Y2Dh8rWwlb",
+      "venue": "ICLR_2025",
+      "year": 2025,
+      "title": "EditRoom: LLM-parameterized Graph Diffusion for Composable 3D Room Layout Editing",
+      "authors": "Kaizhi Zheng; Xiaotong Chen; Xuehai He; Jing Gu; Linjie Li; Zhengyuan Yang; Kevin Lin; Jianfeng Wang; Lijuan Wang; Xin Eric Wang",
+      "abstract": "Given the steep learning curve of professional 3D software and the time-\nconsuming process of managing large 3D assets, language-guided 3D scene editing has significant potential in fields such as virtual reality, augmented reality, and\ngaming. However, recent approaches to language-guided 3D scene editing either\nrequire manual interventions or focus only on appearance modifications without\nsupporting comprehensive scene layout changes. In response, we propose EditRoom, a unified framework capable of executing a variety of layout edits through\nnatural language commands, without requiring manual intervention. Specifically,\nEditRoom leverages Large Language Models (LLMs) for command planning and\ngenerates target scenes using a diffusion-based method, enabling six types of edits: rotate, translate, scale, replace, add, and remove. To address\nthe lack of data for language-guided 3D scene editing, we have developed an automatic pipeline to augment existing 3D scene synthesis datasets and introduced\nEditRoom-DB, a large-scale dataset with 83k editing pairs, for training and evaluation. Our experiments demonstrate that our approach consistently outperforms\nother baselines across all metrics, indicating higher accuracy and coherence in\nlanguage-guided scene layout editing.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "HYiR6tGQPv",
+      "venue": "NeurIPS_2024",
+      "year": 2024,
+      "title": "A probability contrastive learning framework for 3D molecular representation learning",
+      "authors": "Jiayu Qin; Jian Chen; Rohan Sharma; Jingchen Sun; Changyou Chen",
+      "abstract": "Contrastive Learning (CL) plays a crucial role in molecular representation learning, enabling unsupervised learning from large scale unlabeled molecule datasets. It has inspired various applications in molecular property prediction and drug design.\nHowever, existing molecular representation learning methods often introduce potential false positive and false negative pairs through conventional graph augmentations like node masking and subgraph removal. The issue can lead to suboptimal performance when applying standard contrastive learning techniques to molecular datasets. \nTo address the issue of false positive and negative pairs in molecular representation learning, we propose a novel probability-based contrastive learning (CL) framework. Unlike conventional methods, our approach introduces a learnable weight distribution via Bayesian modeling to automatically identify and mitigate false positive and negative pairs. This method is particularly effective because it dynamically adjusts to the data, improving the accuracy of the learned representations. Our model is learned by a stochastic expectation-maximization process, which optimizes the model by iteratively refining the probability estimates of sample weights and updating the model parameters.\nExperimental results indicate that our method outperforms existing approaches in 13 out of 15 molecular property prediction benchmarks in MoleculeNet dataset and 8 out of 12 benchmarks in the QM9 benchmark, achieving new state-of-the-art results on average.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "Hy88Jp0kQT",
+      "venue": "ICML_2024",
+      "year": 2024,
+      "title": "Understanding the Learning Dynamics of Alignment with Human Feedback",
+      "authors": "Shawn Im; Yixuan Li",
+      "abstract": "Aligning large language models (LLMs) with human intentions has become a critical task for safely deploying models in real-world systems. While existing alignment approaches have seen empirical success, theoretically understanding how these methods affect model behavior remains an open question. Our work provides an initial attempt to theoretically analyze the learning dynamics of human preference alignment. We formally show how the distribution of preference datasets influences the rate of model updates and provide rigorous guarantees on the training accuracy. Our theory also reveals an intricate phenomenon where the optimization is prone to prioritizing certain behaviors with higher preference distinguishability. We empirically validate our findings on contemporary LLMs and alignment tasks, reinforcing our theoretical insights and shedding light on considerations for future alignment approaches. Disclaimer: This paper contains potentially offensive text; reader discretion is advised.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "bxITGFPVWh",
+      "venue": "ICLR_2024",
+      "year": 2024,
+      "title": "Sharpness-Aware Data Poisoning Attack",
+      "authors": "Pengfei He; Han Xu; Jie Ren; Yingqian Cui; Shenglai Zeng; Hui Liu; Charu C. Aggarwal; Jiliang Tang",
+      "abstract": "Recent research has highlighted the vulnerability of Deep Neural Networks (DNNs) against data poisoning attacks. These attacks aim to inject poisoning samples into the models' training dataset such that the trained models have inference failures. While previous studies have executed different types of attacks, one major challenge that greatly limits their effectiveness is the \nuncertainty of the re-training process after the injection of poisoning samples. It includes the uncertainty of training initialization, algorithm and model architecture. To address this challenge, we propose a new strategy called **Sharpness-Aware Data Poisoning Attack (SAPA)**. In particular, it leverages the concept of DNNs' loss landscape sharpness to optimize the poisoning effect on the (approximately) worst re-trained model. Extensive experiments demonstrate that SAPA offers a general and principled strategy that significantly enhances various types of poisoning attacks against various types of re-training uncertainty.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "4KqkizXgXU",
+      "venue": "ICLR_2024",
+      "year": 2024,
+      "title": "Curiosity-driven Red-teaming for Large Language Models",
+      "authors": "Zhang-Wei Hong; Idan Shenfeld; Tsun-Hsuan Wang; Yung-Sung Chuang; Aldo Pareja; James R. Glass; Akash Srivastava; Pulkit Agrawal",
+      "abstract": "Large language models (LLMs) hold great potential for many natural language applications but risk generating incorrect or toxic content. To probe when an LLM generates unwanted content, the current paradigm is to recruit a $\\textit{red team}$ of human testers to design input prompts (i.e., test cases) that elicit undesirable responses from LLMs. \nHowever, relying solely on human testers is expensive and time-consuming. Recent works automate red teaming by training a separate red team LLM with reinforcement learning (RL) to generate test cases that maximize the chance of eliciting undesirable responses from the target LLM. However, current RL methods are only able to generate a small number of effective test cases resulting in a low coverage of the span of prompts that elicit undesirable responses from the target LLM.\nTo overcome this limitation, we draw a connection between the problem of increasing the coverage of generated test cases and the well-studied approach of curiosity-driven exploration that optimizes for novelty. \nOur method of curiosity-driven red teaming (CRT) achieves greater coverage of test cases while mantaining or increasing their effectiveness compared to existing methods.\nOur method, CRT successfully provokes toxic responses from LLaMA2 model that has been heavily fine-tuned using human preferences to avoid toxic outputs. Code is available at https://github.com/Improbable-AI/curiosity_redteam.",
+      "arxiv_id": null,
+      "doi": null
+    },
+    {
+      "paper_id": "m51BgoqvbP",
+      "venue": "ICLR_2025",
+      "year": 2025,
+      "title": "Understanding Warmup-Stable-Decay Learning Rates: A River Valley Loss Landscape View",
+      "authors": "Kaiyue Wen; Zhiyuan Li; Jason S. Wang; David Leo Wright Hall; Percy Liang; Tengyu Ma",
+      "abstract": "Training language models currently requires pre-determining a fixed compute budget because the typical cosine learning rate schedule depends on the total number of steps. In contrast, the Warmup-Stable-Decay (WSD) schedule uses a constant learning rate to produce a main branch of iterates that can in principle continue indefinitely without a pre-specified compute budget. Then, given any compute budget, one can branch out from the main branch at a proper time with a rapidly decaying learning rate to produce a strong model. Empirically, WSD generates an intriguing, non-traditional loss curve: the loss remains elevated during the stable phase but sharply declines during the decay phase. Towards explaining this phenomenon, we conjecture that pretraining loss exhibits a river valley landscape, which resembles a deep valley with a river at its bottom. Under this assumption, we show that during the stable phase, the iterate undergoes large oscillations due to the high learning rate, yet it progresses swiftly along the river. During the decay phase, the rapidly dropping learning rate minimizes the iterate’s oscillations, moving it closer to the river and revealing true optimization progress. Therefore, the sustained high learning rate phase and fast decaying phase are responsible for progress in the river and the mountain directions, respectively, and are both critical. Our analysis predicts phenomenons consistent with empirical observations and shows that this landscape can naturally emerge from pretraining on a simple bi-gram dataset. Inspired by the theory, we introduce WSD-S, a variant of WSD that reuses previous checkpoints’ decay phases and keeps only one main branch, where we resume from a decayed checkpoint. WSD-S empirically outperforms WSD and Cyclic-Cosine in obtaining multiple pretrained language model checkpoints across various compute budgets in a single run for parameters scaling from 0.1B to 1.2B.",
+      "arxiv_id": null,
+      "doi": null
+    }
+  ]
+}
