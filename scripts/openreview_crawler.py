@@ -96,6 +96,9 @@ def extract_paper(note, venue_name):
 
     arxiv_id = extract_arxiv_id(content)
 
+    m = re.search(r'_(\d{4})$', venue_name)
+    year = int(m.group(1)) if m else None
+
     return {
         "paper_id": note.id,
         "arxiv_id": arxiv_id,
@@ -104,6 +107,8 @@ def extract_paper(note, venue_name):
         "title": title,
         "abstract": abstract,
         "authors": authors_str,
+        "year": year,
+        "doi": None,
         "crawled_at": datetime.now().isoformat(),
     }
 

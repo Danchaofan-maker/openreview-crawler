@@ -1,18 +1,18 @@
 {
-  "run_at": "2026-05-08T01:07:59.473148",
+  "run_at": "2026-05-08T03:50:40.944754",
   "threshold": 3,
   "venues": {
     "COLT_2024": {
-      "total": 166,
-      "passed_3": 11,
-      "passed_6": 0,
-      "passed_9": 0
+      "total": 167,
+      "passed_3": 106,
+      "passed_6": 48,
+      "passed_9": 15
     },
     "COLT_2025": {
-      "total": 178,
-      "passed_3": 10,
-      "passed_6": 1,
-      "passed_9": 0
+      "total": 179,
+      "passed_3": 122,
+      "passed_6": 54,
+      "passed_9": 23
     },
     "ICLR_2024": {
       "total": 2260,
@@ -46,9 +46,9 @@
     },
     "JMLR": {
       "total": 729,
-      "passed_3": 10,
-      "passed_6": 0,
-      "passed_9": 0
+      "passed_3": 337,
+      "passed_6": 95,
+      "passed_9": 24
     },
     "NeurIPS_2024": {
       "total": 4035,

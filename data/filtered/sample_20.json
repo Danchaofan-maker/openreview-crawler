@@ -1,0 +1,270 @@
+{
+  "source": "data/filtered/math_candidates.jsonl",
+  "seed": 42,
+  "n": 20,
+  "samples": [
+    {
+      "paper_id": "tOwP9z1Zde",
+      "venue": "NeurIPS_2025",
+      "year": 2025,
+      "title": "Kernel Regression in Structured Non-IID Settings: Theory and Implications for Denoising Score Learning",
+      "authors": "Dechen Zhang; Zhenmei Shi; Yi Zhang; Yingyu Liang; Difan Zou",
+      "abstract": "Kernel ridge regression (KRR) is a foundational tool in machine learning, with recent work emphasizing its connections to neural networks. However, existing theory primarily addresses the i.i.d. setting, while real-world data often exhibits structured dependencies - particularly in applications like denoising score learning where multiple noisy observations derive from shared underlying signals. We present the first systematic study of KRR generalization for non-i.i.d. data with signal-noise causal structure, where observations represent different noisy views of common signals. Under standard spectral decay assumptions, we develop a novel blockwise decomposition method that enables precise concentration analysis for dependent data. Using this technique, we derive excess risk bounds for KRR that explicitly depend on: (1) the kernel spectrum, (2) causal structure parameters, and (3) sampling mechanisms (including relative sample sizes for signals and noises). We further apply our results to denoising score learning, establishing generalization guarantees and providing principled guidance for sampling noisy data points. This work advances KRR theory while providing practical tools for analyzing dependent data in modern machine learning applications.",
+      "math_score": 3,
+      "math_hits": [
+        "\\bexcess risk\\b"
+      ]
+    },
+    {
+      "paper_id": "l0ZzTvPfTw",
+      "venue": "ICLR_2025",
+      "year": 2025,
+      "title": "FlashRNN: I/O-Aware Optimization of Traditional RNNs on modern hardware",
+      "authors": "Korbinian Pöppel; Maximilian Beck; Sepp Hochreiter",
+      "abstract": "While Transformers and other sequence-parallelizable neural network architectures seem like the current state of the art in sequence modeling, they specifically lack state-tracking capabilities. These are important for time-series tasks and logical reasoning. Traditional RNNs like LSTMs and GRUs, as well as modern variants like sLSTM do have these capabilities at the cost of strictly sequential processing. While this is often seen as a strong limitation, we show how fast these networks can get with our hardware-optimization FlashRNN in Triton and CUDA, optimizing kernels to the register level on modern GPUs. We extend traditional RNNs with a parallelization variant that processes multiple RNNs of smaller hidden state in parallel, similar to the head-wise processing in Transformers. To enable flexibility on different GPU variants, we introduce a new optimization framework for hardware-internal cache sizes, memory and compute handling. It models the hardware in a setting using polyhedral-like constraints, including the notion of divisibility. This speeds up the solution process in our ConstrINT library for general integer constraint satisfaction problems (integer CSPs).\nWe show that our kernels can achieve 50x speed-ups over a vanilla PyTorch implementation and allow 40x larger hidden sizes compared to our Triton implementation. We have open-sourced our kernels and the optimization library to boost research in the direction of state-tracking enabled RNNs and sequence modeling here: https://github.com/NX-AI/flashrnn",
+      "math_score": 3,
+      "math_hits": [
+        "\\bwe show that\\b"
+      ]
+    },
+    {
+      "paper_id": "pmlr-v291-rossellini25a",
+      "venue": "COLT_2025",
+      "year": 2025,
+      "title": "Can a calibration metric be both testable and actionable?",
+      "authors": "Raphael Rossellini; Jake A. Soloff; Rina Foygel Barber; Zhimei Ren; Rebecca Willett",
+      "abstract": "Forecast probabilities often serve as critical inputs for binary decision making. In such settings, calibration—ensuring forecasted probabilities match empirical frequencies—is essential. Although the common notion of Expected Calibration Error (ECE) provides actionable insights for decision making, it is not testable: it cannot be empirically estimated in many practical cases. Conversely, the recently proposed Distance from Calibration (dCE) is testable, but it is not actionable since it lacks decision-theoretic guarantees needed for high-stakes applications. To resolve this question, we consider Cutoff Calibration Error, a calibration measure that bridges this gap by assessing calibration over intervals of forecasted probabilities. We show that Cutoff Calibration Error is both testable and actionable, and we examine its implications for popular post-hoc calibration methods, such as isotonic regression and Platt scaling.",
+      "math_score": 3,
+      "math_hits": [
+        "\\bwe show that\\b"
+      ]
+    },
+    {
+      "paper_id": "Gx8ujJTnG9",
+      "venue": "TMLR",
+      "year": 2025,
+      "title": "Riemann-Lebesgue Forest for Regression",
+      "authors": "Tian Qin; Wei-Min Huang",
+      "abstract": "We propose a novel ensemble method called Riemann-Lebesgue Forest (RLF) for regression. The core idea in RLF is to mimic the way how a measurable function can be approximated by partitioning its range into a few intervals. With this idea in mind, we develop a new tree learner named Riemann-Lebesgue Tree (RLT) which has a chance to perform ``Lebesgue'' type cutting,i.e., splitting the node from response Y at certain non-terminal nodes. In other words, we introduce the ``splitting type randomness'' in training our ensemble method. Since the information of Y is unavailable in the prediction step, weak local models such as small random forests or decision trees are fit in non-terminal nodes with ``Lebesgue'' type cutting to determine which child node should we proceed to. We show that the optimal ``Lebesgue'' type cutting results in larger variance reduction in response Y  than ordinary CART cutting (an analogue of Riemann partition) in fitting a base tree. Such property is beneficial to the ensemble part of RLF, which is verified by extensive experiments.  We also establish the asymptotic normality of RLF under different parameter settings.  Two one-dimensional examples are provided to illustrate the flexibility of RLF. The competitive performance of RLF with small local random forests against original random forest (RF) and boosting methods such as XGboost is demonstrated by extensive experiments in simulation data and real-world datasets. Additional experiments further illustrate that RLF with local decision trees could achieve decent performance comparable to that of RF with less running time, especially in large datasets.",
+      "math_score": 4,
+      "math_hits": [
+        "\\bwe show that\\b",
+        "\\basymptotic\\b"
+      ]
+    },
+    {
+      "paper_id": "y6y2HauOpR",
+      "venue": "ICML_2024",
+      "year": 2024,
+      "title": "Roping in Uncertainty: Robustness and Regularization in Markov Games",
+      "authors": "Jeremy McMahan; Giovanni Artiglio; Qiaomin Xie",
+      "abstract": "We study robust Markov games (RMG) with $s$-rectangular uncertainty. We show a general equivalence between computing a robust Nash equilibrium (RNE) of a $s$-rectangular RMG and computing a Nash equilibrium (NE) of an appropriately constructed regularized MG. The equivalence result yields a planning algorithm for solving $s$-rectangular RMGs, as well as provable robustness guarantees for policies computed using regularized methods. However, we show that even for just reward-uncertain two-player zero-sum matrix games, computing an RNE is PPAD-hard. Consequently, we derive a special uncertainty structure called efficient player-decomposability and show that RNE for two-player zero-sum RMG in this class can be provably solved in polynomial time. This class includes commonly used uncertainty sets such as $L_1$ and $L_\\infty$ ball uncertainty sets.",
+      "math_score": 3,
+      "math_hits": [
+        "\\bwe show that\\b"
+      ]
+    },
+    {
+      "paper_id": "PJdMrK79Mo",
+      "venue": "ICLR_2026",
+      "year": 2026,
+      "title": "Sample-efficient and Scalable Exploration in Continuous-Time RL",
+      "authors": "Klemens Iten; Lenart Treven; Bhavya Sukhija; Florian Dorfler; Andreas Krause",
+      "abstract": "Reinforcement learning algorithms are typically designed for discrete-time dynamics, even though the underlying real-world control systems are often continuous in time. In this paper, we study the problem of continuous-time reinforcement learning, where the unknown system dynamics are represented using nonlinear ordinary differential equations (ODEs). We leverage probabilistic models, such as Gaussian processes and Bayesian neural networks, to learn an uncertainty-aware model of the underlying ODE. Our algorithm, COMBRL, greedily maximizes a weighted sum of the extrinsic reward and model epistemic uncertainty. This yields a scalable and sample-efficient approach to continuous-time model-based RL. We show that COMBRL achieves sublinear regret in the reward-driven setting, and in the unsupervised RL setting (i.e., without extrinsic rewards), we provide a sample complexity bound. In our experiments, we evaluate COMBRL in both standard and unsupervised RL settings and demonstrate that it scales better, is more sample-efficient than prior methods, and outperforms baselines across several deep RL tasks.",
+      "math_score": 6,
+      "math_hits": [
+        "\\bwe show that\\b",
+        "\\bsample complexity\\b"
+      ]
+    },
+    {
+      "paper_id": "EUAXc9Hlvm",
+      "venue": "ICLR_2026",
+      "year": 2026,
+      "title": "Context parroting: A simple but tough-to-beat baseline for foundation models in scientific machine learning",
+      "authors": "Yuanzhao Zhang; William Gilpin",
+      "abstract": "Recent time-series foundation models exhibit strong abilities to predict physical systems. These abilities include zero-shot forecasting, in which a model forecasts future states of a system given only a short trajectory as context, without knowledge of the underlying physics. Here, we show that foundation models often forecast through a simple parroting strategy, and when they are not parroting they exhibit some shared failure modes such as converging to the mean. As a result, a naive context parroting model that copies directly from the context scores higher than leading time-series foundation models on predicting a diverse range of dynamical systems, including low-dimensional chaos, turbulence, coupled oscillators, and electrocardiograms, at a tiny fraction of the computational cost. We draw a parallel between context parroting and induction heads, which explains recent works showing that large language models can often be repurposed for time series forecasting. Our dynamical systems perspective also ties the scaling between forecast accuracy and context length to the fractal dimension of the underlying chaotic attractor, providing insight into previously observed in-context neural scaling laws. By revealing the performance gaps and failure modes of current time-series foundation models, context parroting can guide the design of future foundation models and help identify in-context learning strategies beyond parroting.",
+      "math_score": 3,
+      "math_hits": [
+        "\\bwe show that\\b"
+      ]
+    },
+    {
+      "paper_id": "2iYVBqRHK4",
+      "venue": "ICLR_2025",
+      "year": 2025,
+      "title": "DOPL: Direct Online Preference Learning for Restless Bandits with Preference Feedback",
+      "authors": "GUOJUN XIONG; Ujwal Dinesha; Debajoy Mukherjee; Jian Li; Srinivas Shakkottai",
+      "abstract": "Restless multi-armed bandits (RMAB) has been widely used to model constrained sequential decision making problems, where the state of each restless arm evolves according to a Markov chain and each state transition generates a scalar reward. However, the success of RMAB crucially relies on the availability and quality of reward signals. Unfortunately, specifying an exact reward function in practice can be challenging and even infeasible. In this paper, we introduce Pref-RMAB,  a new RMAB model in the presence of preference signals, where the decision maker only observes pairwise preference feedback rather than scalar reward from the activated arms at each decision epoch. Preference feedback, however, arguably contains less information than the scalar reward, which makes Pref-RMAB seemingly more difficult. To address this challenge, we present a direct online preference learning (DOPL) algorithm for Pref-RMAB to efficiently explore the unknown environments, adaptively collect preference data in an online manner, and directly leverage the preference feedback for decision-makings. We prove that DOPL yields a sublinear regret. To our best knowledge, this is the first algorithm to ensure $\\tilde{\\mathcal{O}}(\\sqrt{T\\ln T})$ regret for RMAB with preference feedback. Experimental results further demonstrate the effectiveness of DOPL.",
+      "math_score": 3,
+      "math_hits": [
+        "\\bwe prove\\b"
+      ]
+    },
+    {
+      "paper_id": "Znaty8V3a3",
+      "venue": "TMLR",
+      "year": 2025,
+      "title": "On Sparsity and Sub-Gaussianity in the Johnson- Lindenstrauss Lemma",
+      "authors": "Aurélien Garivier; Emmanuel Pilliat",
+      "abstract": "We provide a simple proof of the Johnson-Lindenstrauss lemma for sub-Gaussian variables. We extend the analysis to identify how sparse projections can be, and what the cost of sparsity is on the target dimension.\nThe Johnson-Lindenstrauss lemma is the theoretical core of the dimensionality reduction methods based on random projections. While its original formulation involves matrices with Gaussian entries, the computational cost of random projections can be drastically reduced by the use of simpler variables, especially if they vanish with a high probability. In this paper, we propose a simple and elementary analysis of random projections under classical assumptions that emphasizes the key role of sub-Gaussianity. Furthermore, we show how to extend it to sparse projections, emphasizing the limits induced by the sparsity of the data itself.",
+      "math_score": 6,
+      "math_hits": [
+        "\\blemma\\b",
+        "\\bproof\\b"
+      ]
+    },
+    {
+      "paper_id": "p60Y6o85Cj",
+      "venue": "ICLR_2025",
+      "year": 2025,
+      "title": "Content-Style Learning from Unaligned Domains: Identifiability under Unknown Latent Dimensions",
+      "authors": "Sagar Shrestha; Xiao Fu",
+      "abstract": "Understanding identifiability of latent content and style variables from unaligned multi-domain data is essential for tasks such as\ndomain translation and data generation. Existing works on content-style identification were often developed under somewhat stringent conditions, e.g., that all latent components are mutually independent and that the dimensions of the content and style variables are known. We introduce a new analytical framework via cross-domain *latent distribution matching* (LDM), which establishes content-style identifiability under substantially more relaxed conditions. Specifically, we show that restrictive assumptions such as component-wise independence of the latent variables can be removed. Most notably, we prove that prior knowledge of the content and style dimensions is not necessary for ensuring identifiability, if sparsity constraints are properly imposed onto the learned latent representations. Bypassing the knowledge of the exact latent dimension has been a longstanding aspiration in unsupervised representation learning---our analysis is the first to underpin its theoretical and practical viability. On the implementation side, we recast the LDM formulation into a regularized multi-domain GAN loss with coupled latent variables. We show that the reformulation is equivalent to LDM under mild conditions---yet requiring considerably less computational resource. Experiments corroborate with our theoretical claims.",
+      "math_score": 6,
+      "math_hits": [
+        "\\bwe prove\\b",
+        "\\bwe show that\\b"
+      ]
+    },
+    {
+      "paper_id": "wztnOaiNz7",
+      "venue": "NeurIPS_2025",
+      "year": 2025,
+      "title": "Non-Convex Tensor Recovery from Tube-Wise Sensing",
+      "authors": "Tongle Wu; Ying Sun",
+      "abstract": "In this paper, we propose a novel tube-wise local tensor compressed sensing (CS) model, where sensing operators are independently applied to each tube of a third-order tensor. To recover the low-rank ground truth tensor, we minimize a non-convex objective via Burer–Monteiro factorization and solve it using gradient descent with spectral initialization. We prove that this approach achieves exact recovery with a linear convergence rate. Notably, our method attains provably lower sample complexity than existing TCS methods. Our proof leverages the leave-one-out technique to show that gradient descent generates iterates implicitly biased towards solutions with bounded incoherence, which ensures contraction of optimization error in consecutive iterates. Empirical results validate the effectiveness of GD in solving the proposed local TCS model.",
+      "math_score": 13,
+      "math_hits": [
+        "\\bproof\\b",
+        "\\bwe prove\\b",
+        "\\bconvergence (rate|guarantee|analysis|bound)\\b",
+        "\\bsample complexity\\b",
+        "\\bconvex\\b"
+      ]
+    },
+    {
+      "paper_id": "VPl3T43Hxb",
+      "venue": "TMLR",
+      "year": 2025,
+      "title": "A Local Polyak-Łojasiewicz and Descent Lemma of Gradient Descent For Overparametrized Linear Models",
+      "authors": "Ziqing Xu; Hancheng Min; Salma Tarmoun; Enrique Mallada; Rene Vidal",
+      "abstract": "Most prior work on the convergence of gradient descent (GD) for overparameterized neural networks relies on strong assumptions on the step size (infinitesimal), the hidden-layer width (infinite), or the initialization (large, spectral, balanced). Recent efforts to relax these assumptions focus on two-layer linear networks trained with the squared loss. \nIn this work, we derive a linear convergence rate for training two-layer linear neural networks with GD for general losses and under relaxed assumptions on the step size, width, and initialization. A key challenge in deriving this result is that classical ingredients for deriving convergence rates for nonconvex problems, such as the Polyak-Łojasiewicz (PL) condition and Descent Lemma, do not hold globally for overparameterized neural networks. Here, we prove that these two conditions hold locally with local constants that depend on the weights. Then, we provide bounds on these local constants, which depend on the initialization of the weights, the current loss, and the global PL and smoothness constants of the non-overparameterized model. Based on these bounds, we derive a linear convergence rate for GD. Our convergence analysis not only improves upon prior results but also suggests a better choice for the step size, as verified through our numerical experiments.",
+      "math_score": 9,
+      "math_hits": [
+        "\\blemma\\b",
+        "\\bwe prove\\b",
+        "\\bconvergence (rate|guarantee|analysis|bound)\\b"
+      ]
+    },
+    {
+      "paper_id": "aIyNLWXuDO",
+      "venue": "NeurIPS_2024",
+      "year": 2024,
+      "title": "Transformers Can Do Arithmetic with the Right Embeddings",
+      "authors": "Sean Michael McLeish; Arpit Bansal; Alex Stein; Neel Jain; John Kirchenbauer; Brian R. Bartoldson; Bhavya Kailkhura; Abhinav Bhatele; Jonas Geiping; Avi Schwarzschild; Tom Goldstein",
+      "abstract": "The poor performance of transformers on arithmetic tasks seems to stem in large part from their inability to keep track of the exact position of each digit inside of a large span of digits. We mend this problem by adding an embedding to each digit that encodes its position relative to the start of the number. In addition to the boost these embeddings provide on their own, we show that this fix enables architectural modifications such as input injection and recurrent layers to improve performance even further.\n\nWith positions resolved, we can study the logical extrapolation ability of transformers. Can they solve arithmetic problems that are larger and more complex than those in their training data? We find that training on only 20 digit numbers with a single GPU for one day, we can reach state-of-the-art performance, achieving up to 99% accuracy on 100 digit addition problems. Finally, we show that these gains in numeracy also unlock improvements on other multi-step reasoning tasks including sorting and multiplication.",
+      "math_score": 3,
+      "math_hits": [
+        "\\bwe show that\\b"
+      ]
+    },
+    {
+      "paper_id": "pFOoOdaiue",
+      "venue": "ICLR_2024",
+      "year": 2024,
+      "title": "Robust Adversarial Reinforcement Learning via Bounded Rationality Curricula",
+      "authors": "Aryaman Reddi; Maximilian Tölle; Jan Peters; Georgia Chalvatzaki; Carlo D'Eramo",
+      "abstract": "Robustness against adversarial attacks and distribution shifts is a long-standing goal of Reinforcement Learning (RL). To this end, Robust Adversarial Reinforcement Learning (RARL) trains a protagonist against destabilizing forces exercised by an adversary in a competitive zero-sum Markov game, whose optimal solution, i.e., rational strategy, corresponds to a Nash equilibrium. However, finding Nash equilibria requires facing complex saddle point optimization problems, which can be prohibitive to solve, especially for high-dimensional control. In this paper, we propose a novel approach for adversarial RL based on entropy regularization to ease the complexity of the saddle point optimization problem. We show that the solution of this entropy-regularized problem corresponds to a Quantal Response Equilibrium (QRE), a generalization of Nash equilibria that accounts for bounded rationality, i.e., agents sometimes play random actions instead of optimal ones. Crucially, the connection between the entropy-regularized objective and QRE enables free modulation of the rationality of the agents by simply tuning the temperature coefficient. We leverage this insight to propose our novel algorithm, Quantal Adversarial RL (QARL), which gradually increases the rationality of the adversary in a curriculum fashion until it is fully rational, easing the complexity of the optimization problem while retaining robustness. We provide extensive evidence of QARL outperforming RARL and recent baselines across several MuJoCo locomotion and navigation problems in overall performance and robustness.",
+      "math_score": 4,
+      "math_hits": [
+        "\\bwe show that\\b",
+        "weak×2"
+      ]
+    },
+    {
+      "paper_id": "1ix6MGV2fz",
+      "venue": "NeurIPS_2025",
+      "year": 2025,
+      "title": "On the Existence and Complexity of Core-Stable Data Exchanges",
+      "authors": "Jiaxin Song; Pooja Ravi Kulkarni; Parnian Shahkar; Bhaskar Ray Chaudhury",
+      "abstract": "The rapid growth of data-driven technologies and the emergence of various data-sharing paradigms have underscored the need for efficient and stable data exchange protocols. In any such exchange, agents must carefully balance the benefit of acquiring valuable data against the cost of sharing their own. Ensuring stability in these exchanges is essential to prevent agents—or groups of agents—from departing and conducting local (and potentially more favorable) exchanges among themselves. \nTo address this, we study a model where $n$ agents participate in a data exchange. Each agent has an associated payoff for the data acquired from other agents and a cost incurred during sharing its own data. The net utility of an agent is payoff minus the cost. We adapt the classical notion of *core-stability* from cooperative game theory to data exchange. \nA data exchange is core-stable if no subset of agents has any incentive to deviate to a different exchange. \nWe show that a core-stable data exchange is guaranteed to exist when agents have concave payoff functions and convex cost functions-- a setting typical in domains like PAC learning and random discovery models. We show that relaxing either of the foregoing conditions may result in the nonexistence of core-stable data exchanges. Then, we prove that finding a core-stable exchange is *PPAD-hard*, even when the potential blocking coalitions are restricted to constant size. To the best of our knowledge, this provides the first known PPAD-hardness result for core-like guarantees in data economics. Finally, we show that data exchange can be modelled as a *balanced* $n$-person game. This immediately gives a pivoting algorithm via Scarf's theorem [Scarf1967core]. We show that the pivoting algorithm works well in practice through our empirical results.",
+      "math_score": 14,
+      "math_hits": [
+        "\\btheorem\\b",
+        "\\bwe prove\\b",
+        "\\bwe show that\\b",
+        "\\bpac(-|\\s)learn",
+        "\\bconvex\\b",
+        "\\bconcave\\b"
+      ]
+    },
+    {
+      "paper_id": "O2fUpyeRWs",
+      "venue": "ICML_2025",
+      "year": 2025,
+      "title": "Optimal Transport Barycenter via Nonconvex-Concave Minimax Optimization",
+      "authors": "Kaheon Kim; Rentian Yao; Changbo Zhu; Xiaohui Chen",
+      "abstract": "The optimal transport barycenter (a.k.a. Wasserstein barycenter) is a fundamental notion of averaging that extends from the Euclidean space to the Wasserstein space of probability distributions. Computation of the *unregularized* barycenter for discretized probability distributions on point clouds is a challenging task when the domain dimension $d > 1$. Most practical algorithms for approximating the barycenter problem are based on entropic regularization. In this paper, we introduce a nearly linear time $O(m \\log{m})$ and linear space complexity $O(m)$ primal-dual algorithm, the *Wasserstein-Descent $\\dot{\\mathbb{H}}^1$-Ascent* (WDHA) algorithm, for computing the *exact* barycenter when the input probability density functions are discretized on an $m$-point grid. The key success of the WDHA algorithm hinges on alternating between two different yet closely related Wasserstein and Sobolev optimization geometries for the primal barycenter and dual Kantorovich potential subproblems. Under reasonable assumptions, we establish the convergence rate and iteration complexity of WDHA to its stationary point when the step size is appropriately chosen. Superior computational efficacy, scalability, and accuracy over the existing Sinkhorn-type algorithms are demonstrated on high-resolution (e.g., $1024 \\times 1024$ images) 2D synthetic and real data.",
+      "math_score": 7,
+      "math_hits": [
+        "\\bconvergence (rate|guarantee|analysis|bound)\\b",
+        "\\bminimax\\b",
+        "\\bconcave\\b",
+        "\\bsobolev\\b",
+        "weak×2"
+      ]
+    },
+    {
+      "paper_id": "fe6ANBxcKM",
+      "venue": "ICLR_2024",
+      "year": 2024,
+      "title": "Federated Q-Learning: Linear Regret Speedup with Low Communication Cost",
+      "authors": "Zhong Zheng; Fengyu Gao; Lingzhou Xue; Jing Yang",
+      "abstract": "In this paper, we consider federated reinforcement learning for tabular episodic Markov Decision Processes (MDP) where, under the coordination of a central server, multiple agents collaboratively explore the environment and learn an optimal policy without sharing their raw data.  While linear speedup in the number of agents has been achieved for some metrics, such as convergence rate and sample complexity, in similar settings, it is unclear whether it is possible to design a *model-free* algorithm to achieve linear *regret* speedup with low communication cost. We propose two federated Q-Learning algorithms termed as FedQ-Hoeffding and FedQ-Bernstein, respectively, and show that the corresponding total regrets achieve a linear speedup compared with their single-agent counterparts, while the communication cost scales logarithmically in the total number of time steps $T$. Those results rely on an event-triggered synchronization mechanism between the agents and the server, a novel step size selection when the server aggregates the local estimates of the state-action values to form the global estimates, and a set of new concentration inequalities to bound the sum of non-martingale differences. This is the first work showing that linear regret speedup and logarithmic communication cost can be achieved by model-free algorithms in federated reinforcement learning.",
+      "math_score": 6,
+      "math_hits": [
+        "\\bconvergence (rate|guarantee|analysis|bound)\\b",
+        "\\bsample complexity\\b"
+      ]
+    },
+    {
+      "paper_id": "mlJLVigNHp",
+      "venue": "ICLR_2024",
+      "year": 2024,
+      "title": "RECOMP: Improving Retrieval-Augmented LMs with Context Compression and Selective Augmentation",
+      "authors": "Fangyuan Xu; Weijia Shi; Eunsol Choi",
+      "abstract": "Retrieval-augmented language models improve language models (LMs) by retrieving documents and prepending them in-context.\nHowever, these documents, often spanning hundreds of words, make inference substantially less efficient. We propose compressing the retrieved documents into textual summaries prior to in-context integration. This not only reduces the computational costs but also relieve the burden of LMs to identify relevant information in long retrieved documents. We present two compressors -- an extractive compressor which selects useful sentences from retrieved documents  and an abstractive compressor which generates summary by synthesizing information from multiple documents. Both are trained to achieve performance gain in LMs when we prepend the generated summary from the compressor to LMs' input, while minimizing the summary length. When retrieved documents are irrelevant to the input or offer no additional information to LM, our compressors output an empty string, enabling selective augmentation. We evaluate our approach on the language modeling task and open domain question answering task. We achieve a compression rate of as low as 6% with minimal loss in performance for both tasks, significantly outperforming the off-the-shelf summarization models. We show that our compressors trained for one LM can transfer to other LMs on the language modeling task and provide a summary largely faithful to the retrieved documents.",
+      "math_score": 3,
+      "math_hits": [
+        "\\bwe show that\\b"
+      ]
+    },
+    {
+      "paper_id": "riTiq3i21b",
+      "venue": "ICLR_2025",
+      "year": 2025,
+      "title": "SWE-bench Multimodal: Do AI Systems Generalize to Visual Software Domains?",
+      "authors": "John Yang; Carlos E Jimenez; Alex L Zhang; Kilian Lieret; Joyce Yang; Xindi Wu; Ori Press; Niklas Muennighoff; Gabriel Synnaeve; Karthik R Narasimhan; Diyi Yang; Sida Wang; Ofir Press",
+      "abstract": "Autonomous systems for software engineering are now capable of fixing bugs and developing features. These systems are commonly evaluated on SWE-bench (Jimenez et al., 2024a), which assesses their ability to solve software issues from GitHub repositories. However, SWE-bench uses only Python repositories, with problem statements presented predominantly as text and lacking visual elements such as images. This limited coverage motivates our inquiry into how existing systems might perform on unrepresented software engineering domains\n(e.g., front-end, game development, DevOps), which use different programming languages and paradigms. Therefore, we propose SWE-bench Multimodal (SWE-bench M), to evaluate systems on their ability to fix bugs in visual, user-facing JavaScript software. SWE-bench M features 617 task instances collected from 17 JavaScript libraries used for web interface design, diagramming, data visualization, syntax highlighting, and interactive mapping. Each SWE-bench M task instance contains at least one image in its problem statement or unit tests. Our analysis finds that top-performing SWE-bench systems struggle with SWE-bench M, revealing limitations in visual problem-solving and cross-language generalization. Lastly, we show that SWE-agent’s flexible language-agnostic features enable it to substantially outperform alternatives on SWE-bench M, resolving 12% of task\ninstances compared to 6% for the next best system.",
+      "math_score": 3,
+      "math_hits": [
+        "\\bwe show that\\b"
+      ]
+    },
+    {
+      "paper_id": "6hZAo6fZvJ",
+      "venue": "ICLR_2026",
+      "year": 2026,
+      "title": "Distributional value gradients for stochastic environments",
+      "authors": "Baptiste Debes; Tinne Tuytelaars",
+      "abstract": "Gradient-regularized value learning methods improve sample efficiency by leveraging learned models of transition dynamics and rewards to estimate return gradients. However, existing approaches, such as MAGE, struggle in stochastic or noisy environments,  limiting their applicability. In this work, we address these limitations by extending distributional reinforcement learning on continuous state-action spaces to model not only the distribution over scalar state-action value functions but also over their gradients. We refer to this approach as Distributional Sobolev Training. Inspired by Stochastic Value Gradients (SVG), our method utilizes a one-step world model of reward and transition distributions implemented via a conditional Variational Autoencoder (cVAE). The proposed framework is sample-based and employs Max-sliced Maximum Mean Discrepancy (MSMMD) to instantiate the distributional Bellman operator. We prove that the Sobolev-augmented Bellman operator is a contraction with a unique fixed point, and highlight a fundamental smoothness trade-off underlying contraction in gradient-aware RL. To validate our method, we first showcase its effectiveness on a simple stochastic reinforcement‐learning toy problem, then benchmark its performance on several MuJoCo environments.",
+      "math_score": 5,
+      "math_hits": [
+        "\\bwe prove\\b",
+        "\\bvariational\\b",
+        "\\bsobolev\\b"
+      ]
+    }
+  ]
+}

@@ -44,7 +44,7 @@ def extract_paper(note):
     arxiv_id = extract_arxiv_id(content)
 
     pdate_ts = note.pdate
-    pdate_str = datetime.utcfromtimestamp(pdate_ts / 1000).strftime('%Y-%m-%d') if pdate_ts else None
+    year = datetime.utcfromtimestamp(pdate_ts / 1000).year if pdate_ts else None
 
     return {
         "paper_id": note.id,
@@ -54,9 +54,8 @@ def extract_paper(note):
         "title": title,
         "abstract": abstract,
         "authors": authors_str,
-        "year": int(pdate_str[:4]) if pdate_str else None,
+        "year": year,
         "doi": None,
-        "pdate": pdate_str,
         "crawled_at": datetime.now().isoformat(),
     }
 
