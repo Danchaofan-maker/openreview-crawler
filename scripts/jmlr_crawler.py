@@ -73,7 +73,7 @@ def fetch_abstract(abs_url):
     html = fetch(abs_url)
     if not html:
         return ""
-    m = re.search(r'<p>(.*?)</p>', html, re.DOTALL)
+    m = re.search(r'<p class=["\']abstract["\']>(.*?)</p>', html, re.DOTALL | re.IGNORECASE)
     if m:
         return re.sub(r'<[^>]+>', '', m.group(1)).strip()
     return ""

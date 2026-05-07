@@ -1,0 +1,84 @@
+{
+  "run_at": "2026-05-08T01:07:59.473148",
+  "threshold": 3,
+  "venues": {
+    "COLT_2024": {
+      "total": 166,
+      "passed_3": 11,
+      "passed_6": 0,
+      "passed_9": 0
+    },
+    "COLT_2025": {
+      "total": 178,
+      "passed_3": 10,
+      "passed_6": 1,
+      "passed_9": 0
+    },
+    "ICLR_2024": {
+      "total": 2260,
+      "passed_3": 492,
+      "passed_6": 76,
+      "passed_9": 14
+    },
+    "ICLR_2025": {
+      "total": 3703,
+      "passed_3": 627,
+      "passed_6": 85,
+      "passed_9": 10
+    },
+    "ICLR_2026": {
+      "total": 5352,
+      "passed_3": 821,
+      "passed_6": 131,
+      "passed_9": 18
+    },
+    "ICML_2024": {
+      "total": 2610,
+      "passed_3": 663,
+      "passed_6": 118,
+      "passed_9": 24
+    },
+    "ICML_2025": {
+      "total": 3257,
+      "passed_3": 687,
+      "passed_6": 120,
+      "passed_9": 17
+    },
+    "JMLR": {
+      "total": 729,
+      "passed_3": 10,
+      "passed_6": 0,
+      "passed_9": 0
+    },
+    "NeurIPS_2024": {
+      "total": 4035,
+      "passed_3": 892,
+      "passed_6": 190,
+      "passed_9": 40
+    },
+    "NeurIPS_2025": {
+      "total": 5286,
+      "passed_3": 992,
+      "passed_6": 171,
+      "passed_9": 37
+    },
+    "SIMODS": {
+      "total": 133,
+      "passed_3": 16,
+      "passed_6": 5,
+      "passed_9": 0
+    },
+    "SIOPT": {
+      "total": 268,
+      "passed_3": 58,
+      "passed_6": 18,
+      "passed_9": 0
+    },
+    "TMLR": {
+      "total": 3004,
+      "passed_3": 617,
+      "passed_6": 89,
+      "passed_9": 18
+    }
+  }
+}
