@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""DeepSeek 打分测试 — 用 prompt.md 给 sample_20 中前 N 篇论文打分
+"""DeepSeek V4 打分测试 — 用 prompt.md 给 sample_20 中前 N 篇论文打分
 
 用法: uv run scripts/score_paper_test.py [N] [model]
-默认 N=3, model=deepseek-reasoner
+默认 N=3, model=deepseek-v4-pro (旗舰 hybrid 模型,thinking 默认开)
 环境变量: DEEPSEEK_API_KEY 必填
+
+请求中显式传 thinking + reasoning_effort,确保 reasoning 通道开启;
+响应里 reasoning_content 与 content 同级,前者保存为日志,后者必须是纯 JSON。
 """
 import os
 import sys
@@ -34,21 +37,24 @@ def call_deepseek(system: str, user: str, model: str) -> dict:
     api_key = os.environ.get("DEEPSEEK_API_KEY")
     if not api_key:
         sys.exit("ERROR: DEEPSEEK_API_KEY not set in environment")
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        "stream": False,
+        "thinking": {"type": "enabled"},
+        "reasoning_effort": "high",
+    }
     r = requests.post(
         API_URL,
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         },
-        json={
-            "model": model,
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            "stream": False,
-        },
-        timeout=600,
+        json=payload,
+        timeout=900,
     )
     r.raise_for_status()
     return r.json()
@@ -56,7 +62,7 @@ def call_deepseek(system: str, user: str, model: str) -> dict:
 
 def main():
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
-    model = sys.argv[2] if len(sys.argv) > 2 else "deepseek-reasoner"
+    model = sys.argv[2] if len(sys.argv) > 2 else "deepseek-v4-pro"
 
     system_prompt = Path(PROMPT_PATH).read_text(encoding="utf-8")
     sample_payload = json.loads(Path(SAMPLE_PATH).read_text(encoding="utf-8"))
