@@ -78,8 +78,9 @@ def parse_content(content: str):
     return json.loads(s)
 
 
-def process_one(paper: dict, system_prompt: str, model: str, api_key: str) -> dict:
+def process_one(paper: dict, system_prompt: str, model: str, api_key: str, order_idx: int) -> dict:
     record = {
+        "_order_idx": order_idx,
         "paper_id": paper["paper_id"],
         "title": paper.get("title", ""),
         "venue": paper.get("venue"),
@@ -183,8 +184,14 @@ def main():
     ok_count = 0
     fail_count = 0
 
+    # 给每篇分配原始顺序索引(在 samples 中的位置)
+    pid_to_order = {p["paper_id"]: i for i, p in enumerate(samples)}
+
     with ThreadPoolExecutor(max_workers=workers) as ex:
-        futures = {ex.submit(process_one, p, system_prompt, model, api_key): p for p in todo}
+        futures = {
+            ex.submit(process_one, p, system_prompt, model, api_key, pid_to_order[p["paper_id"]]): p
+            for p in todo
+        }
         with tqdm(total=len(todo), desc="打分中", unit="篇") as pbar:
             for fut in as_completed(futures):
                 rec = fut.result()
@@ -202,6 +209,25 @@ def main():
 
     elapsed = time.time() - t_start
     print(f"\n完成 ok={ok_count} fail={fail_count}  墙钟 {elapsed:.0f}s")
+
+    # 按原始顺序重排输出文件(并发写入是乱序的)
+    print("按原始顺序重排输出 ...", end=" ", flush=True)
+    all_records = []
+    with open(OUTPUT_PATH, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                all_records.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    # 缺失 _order_idx 的(老 schema 续跑)排到末尾
+    all_records.sort(key=lambda r: r.get("_order_idx", 10**9))
+    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+        for rec in all_records:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    print(f"完成({len(all_records)} 条)")
 
     # 汇总 cache 命中情况
     total_hit = total_miss = total_in = total_out = 0
