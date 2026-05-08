@@ -24,7 +24,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from tqdm import tqdm
 
-PROMPT_PATH = "prompt.md"
+PROMPT_PATH = "prompt_flash.md"
 SAMPLE_PATH = "data/sample_20.json"
 OUTPUT_PATH = "data/llm_test_v4flash_run.jsonl"
 API_URL = "https://api.deepseek.com/v1/chat/completions"
