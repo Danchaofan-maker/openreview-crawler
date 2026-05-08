@@ -487,26 +487,47 @@ elif mode.startswith("🕶️"):
 # Mode 4: 对照视图
 # ============================================================
 elif mode.startswith("⚖️"):
-    st.header("对照视图:LLM × 各审阅者")
+    st.header("⚖️ 对照视图:LLM × 各审阅者")
     existing = list_reviewers()
     if not existing:
         st.info("暂无审阅者档案。先去「双盲打分」生成。")
         st.stop()
 
     reviewer_data = {name: load_reviews(name) for name in existing}
+    paper_rows = {r["paper_id"]: r for r in rows}
 
-    # 构建对照表
+    # ---- 配置:可调 LLM filter hint ----
+    with st.sidebar:
+        st.markdown("### LLM filter hint 阈值")
+        hint_rigor_max = st.slider("rigor 上限(<= 即 filter_out)", 0.0, 10.0, 3.0, 0.5)
+        hint_absent = st.checkbox("integrity=absent 即 filter_out", value=True)
+        hint_marketing = st.checkbox("marketing=true 即 filter_out", value=False)
+        st.caption("LLM_hint = (integrity=absent ∧ 上勾) ∨ (rigor < 阈值) ∨ (marketing ∧ 上勾)")
+
+    def llm_hint(r) -> bool:
+        rigor = r["mathematical_rigor"] or 0
+        if hint_absent and r["integrity"] == "absent":
+            return True
+        if rigor < hint_rigor_max:
+            return True
+        if hint_marketing and r.get("marketing"):
+            return True
+        return False
+
+    # ---- 构建主表 ----
     rows_table = []
     for _, r in df.iterrows():
         pid = r["paper_id"]
         rec = {
             "paper_id": pid,
-            "title": r["title"][:70],
+            "title": r["title"],
             "venue": r["venue"],
+            "year": r["year"],
             "LLM_integrity": r["integrity"],
             "LLM_rigor": r["mathematical_rigor"],
             "LLM_novelty": r["theoretical_novelty"],
-            "LLM_filter_hint": r["integrity"] == "absent" or (r["mathematical_rigor"] or 0) < 3,
+            "LLM_marketing": r["marketing"],
+            "LLM_hint_filter_out": llm_hint(r),
         }
         for name in existing:
             v = reviewer_data[name].get(pid)
@@ -515,35 +536,159 @@ elif mode.startswith("⚖️"):
         rows_table.append(rec)
     cdf = pd.DataFrame(rows_table)
 
-    # 计算分歧
+    # ---- 一致性统计 ----
+    def cohens_kappa(a_vals, b_vals):
+        """Binary Cohen's kappa for two arrays of bool/None."""
+        pairs = [(a, b) for a, b in zip(a_vals, b_vals) if a is not None and b is not None]
+        if not pairs:
+            return None, 0
+        n = len(pairs)
+        po = sum(1 for a, b in pairs if a == b) / n
+        p_a_pos = sum(1 for a, _ in pairs if a) / n
+        p_b_pos = sum(1 for _, b in pairs if b) / n
+        pe = p_a_pos * p_b_pos + (1 - p_a_pos) * (1 - p_b_pos)
+        if pe >= 1:
+            return 1.0, n
+        kappa = (po - pe) / (1 - pe)
+        return kappa, n
+
+    # 3 方两两 kappa
+    pairs = [("LLM_hint", existing[0])]
     if len(existing) >= 2:
-        a, b = existing[0], existing[1]
-        cdf["人际分歧"] = cdf.apply(
-            lambda x: (
-                None
-                if x[f"{a}_filter_out"] is None or x[f"{b}_filter_out"] is None
-                else x[f"{a}_filter_out"] != x[f"{b}_filter_out"]
-            ),
-            axis=1,
+        pairs.append(("LLM_hint", existing[1]))
+        pairs.append((existing[0], existing[1]))
+
+    st.subheader("📈 概览")
+    overview_cols = st.columns(len(pairs) + 1)
+    overview_cols[0].metric("论文数", len(cdf))
+    for i, (a, b) in enumerate(pairs):
+        ac = "LLM_hint_filter_out" if a == "LLM_hint" else f"{a}_filter_out"
+        bc = "LLM_hint_filter_out" if b == "LLM_hint" else f"{b}_filter_out"
+        kappa, n = cohens_kappa(cdf[ac].tolist(), cdf[bc].tolist())
+        kappa_str = f"{kappa:+.2f}" if kappa is not None else "n/a"
+        # 简单一致性
+        agree = sum(1 for x, y in zip(cdf[ac], cdf[bc]) if x is not None and y is not None and x == y)
+        a_label = "LLM" if a == "LLM_hint" else a
+        b_label = "LLM" if b == "LLM_hint" else b
+        overview_cols[i + 1].metric(
+            f"{a_label} ↔ {b_label}",
+            f"κ={kappa_str}",
+            delta=f"{agree}/{n} 同意",
+            delta_color="off",
         )
-    cdf["LLM-人分歧"] = cdf.apply(
-        lambda x: any(
-            (x.get(f"{n}_filter_out") is not None) and (x.get(f"{n}_filter_out") != x["LLM_filter_hint"])
-            for n in existing
-        ),
-        axis=1,
-    )
 
-    only_disagree = st.checkbox("仅看分歧行(LLM 提示 vs 人 不一致,或两人之间不一致)", value=False)
-    show = cdf
-    if only_disagree:
-        if "人际分歧" in cdf.columns:
-            show = cdf[cdf["LLM-人分歧"] | (cdf["人际分歧"] == True)]
-        else:
-            show = cdf[cdf["LLM-人分歧"]]
+    # 各审阅者打标分布
+    st.markdown("**各审阅者打标分布**")
+    dist_cols = st.columns(len(existing) + 1)
+    llm_filter_n = int(cdf["LLM_hint_filter_out"].sum())
+    dist_cols[0].metric("LLM_hint filter_out", f"{llm_filter_n} / {len(cdf)}", f"{llm_filter_n/len(cdf)*100:.0f}%")
+    for i, name in enumerate(existing):
+        col = f"{name}_filter_out"
+        n_fo = int(cdf[col].fillna(False).sum())
+        n_total = int(cdf[col].notna().sum())
+        dist_cols[i + 1].metric(f"{name} filter_out", f"{n_fo} / {n_total}", f"{n_fo/max(n_total,1)*100:.0f}%")
 
-    st.caption(f"显示 {len(show)} / {len(cdf)} 行 ·  LLM_filter_hint = (integrity==absent OR rigor<3)")
-    st.dataframe(show, use_container_width=True, height=600)
+    st.divider()
 
+    # ---- 三方一致性分类 ----
+    def classify(row):
+        l = row["LLM_hint_filter_out"]
+        humans = [row.get(f"{n}_filter_out") for n in existing]
+        humans = [h for h in humans if h is not None]
+        if not humans:
+            return "未审阅"
+        all_humans_agree = len(set(humans)) == 1
+        if all_humans_agree and humans[0] == l:
+            return "✅ 全一致"
+        if all_humans_agree and humans[0] != l:
+            return "🔴 LLM 孤立"
+        if not all_humans_agree:
+            if l in humans:
+                return "🟡 人际分歧 (LLM 与一人同)"
+            else:
+                return "🟣 三方分歧"
+        return "其他"
+
+    cdf["分类"] = cdf.apply(classify, axis=1)
+    class_counts = cdf["分类"].value_counts()
+
+    st.subheader("🗂️ 一致性分类")
+    cat_cols = st.columns(len(class_counts) or 1)
+    for i, (cat, n) in enumerate(class_counts.items()):
+        cat_cols[i].metric(cat, n)
+
+    # ---- Tabs:每类一个面板 ----
+    categories = ["✅ 全一致", "🔴 LLM 孤立", "🟡 人际分歧 (LLM 与一人同)", "🟣 三方分歧", "未审阅"]
+    available = [c for c in categories if c in class_counts]
+    if available:
+        tabs = st.tabs(available)
+        for tab, cat in zip(tabs, available):
+            with tab:
+                sub = cdf[cdf["分类"] == cat].sort_values("paper_id")
+                if len(sub) == 0:
+                    st.caption("(空)")
+                    continue
+
+                # 紧凑表格
+                show_cols = ["paper_id", "venue", "title", "LLM_integrity", "LLM_rigor",
+                             "LLM_marketing", "LLM_hint_filter_out"] + \
+                            [f"{n}_filter_out" for n in existing]
+                st.dataframe(sub[show_cols], use_container_width=True, height=min(40 + 35 * len(sub), 400))
+
+                # 逐篇可展开详情
+                if cat != "✅ 全一致":  # 全一致就不需要细看
+                    st.markdown("**逐篇详情**(点开看摘要、LLM 理由、双方 note)")
+                    for _, row in sub.iterrows():
+                        pid = row["paper_id"]
+                        llm_row = paper_rows.get(pid, {})
+                        p = llm_row.get("parsed") or {}
+                        with st.expander(f"`{pid}` · {row['venue']} {row['year']} · {row['title'][:80]}"):
+                            # 摘要
+                            abstract = (abs_map.get(pid) or {}).get("abstract", "(摘要未在缓存找到)")
+                            st.markdown("**摘要**")
+                            st.write(abstract)
+
+                            ccol1, ccol2, ccol3 = st.columns(3)
+                            with ccol1:
+                                st.markdown("**LLM 判定**")
+                                st.write(f"hint filter_out: **{row['LLM_hint_filter_out']}**")
+                                st.write(f"integrity: `{row['LLM_integrity']}`")
+                                st.write(f"rigor: {row['LLM_rigor']}")
+                                st.write(f"novelty: {row['LLM_novelty']}")
+                                st.write(f"marketing: {row['LLM_marketing']}")
+                                lc = p.get("logical_chain") or {}
+                                if lc.get("conclusion"):
+                                    st.caption(f"结论: {lc['conclusion']}")
+                            with ccol2:
+                                if existing:
+                                    name = existing[0]
+                                    v = row.get(f"{name}_filter_out")
+                                    st.markdown(f"**{name} 判定**")
+                                    st.write(f"filter_out: **{v}**")
+                                    note = row.get(f"{name}_note") or ""
+                                    if note.strip():
+                                        st.caption(f"note: {note}")
+                            with ccol3:
+                                if len(existing) >= 2:
+                                    name = existing[1]
+                                    v = row.get(f"{name}_filter_out")
+                                    st.markdown(f"**{name} 判定**")
+                                    st.write(f"filter_out: **{v}**")
+                                    note = row.get(f"{name}_note") or ""
+                                    if note.strip():
+                                        st.caption(f"note: {note}")
+
+                            # LLM 9 维度 rationale 折叠
+                            with st.expander("LLM 9 维度 rationale"):
+                                for d in DIMS:
+                                    v = p.get(d)
+                                    if isinstance(v, dict):
+                                        st.markdown(f"- **{DIM_CN[d]}** = `{v.get('score')}` — {v.get('rationale','')}")
+
+    st.divider()
+
+    # ---- 完整表导出 ----
+    with st.expander("📋 完整对照表 (所有论文)"):
+        st.dataframe(cdf, use_container_width=True, height=400)
     csv = cdf.to_csv(index=False).encode("utf-8")
     st.download_button("📥 导出对照表 (csv)", csv, "comparison.csv", "text/csv")
