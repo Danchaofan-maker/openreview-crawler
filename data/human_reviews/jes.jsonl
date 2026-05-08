@@ -1,0 +1,21 @@
+{"paper_id": "tOwP9z1Zde", "reviewer": "jes", "filter_out": false, "note": "结合谱定理，推导出现有工具的明确界限，不错的工作", "ts": "2026-05-08T08:41:11"}
+{"paper_id": "pmlr-v291-rossellini25a", "reviewer": "jes", "filter_out": false, "note": "典型的两难问题，不可操作和不可测试。预测概率区间的校准吗，不错的尝试，但似乎缺少明确的数学推理，可以保留并作为人工分析样本", "ts": "2026-05-08T08:45:08"}
+{"paper_id": "y6y2HauOpR", "reviewer": "jes", "filter_out": false, "note": "随机过程，博弈论和高维空间，且涉及可解决性的严格证明，很符合我心目中对于具有扎实数学基础的人工智能方向论文的印象。不错。不过不太了解这篇论文所涉及的马尔可夫博弈具体为何会和ML有关", "ts": "2026-05-08T08:54:00"}
+{"paper_id": "EUAXc9Hlvm", "reviewer": "jes", "filter_out": true, "note": "利用数学提供合法性“见解”。主要贡献在于有趣的insight。不保留", "ts": "2026-05-08T08:55:42"}
+{"paper_id": "Znaty8V3a3", "reviewer": "jes", "filter_out": true, "note": "不太明白，这是机器学习理论的一次微小部分的补全。？本质上对我们意义不大，太偏门了。我会筛掉，虽然满足数学严苛性质", "ts": "2026-05-08T08:57:58"}
+{"paper_id": "wztnOaiNz7", "reviewer": "jes", "filter_out": false, "note": "可以，线性收敛结果吗。样本复杂度上更优且有理论证明。不错的工作。SOTA且有证明。清晰干净。技术栈合理。", "ts": "2026-05-08T09:01:00"}
+{"paper_id": "aIyNLWXuDO", "reviewer": "jes", "filter_out": true, "note": "啥玩意啊。这也能发nips也是神了，在100位数字加法上测试。但不算非常垃圾吧，就是不够格。", "ts": "2026-05-08T09:04:03"}
+{"paper_id": "2iYVBqRHK4", "reviewer": "jes", "filter_out": false, "note": "有明确的regret，确实在多臂老虎机问题上有进展且有数学证明。", "ts": "2026-05-08T09:07:33"}
+{"paper_id": "fe6ANBxcKM", "reviewer": "jes", "filter_out": false, "note": "不错，证明模型自由算法可以实现明确的线性和对数成本。提出两种联邦Q学习算法。范式很明显，可作为样本参考", "ts": "2026-05-08T09:09:46"}
+{"paper_id": "riTiq3i21b", "reviewer": "jes", "filter_out": false, "note": "实证研究。本质上是对已有框架的拓展，本质上是工程问题。", "ts": "2026-05-08T09:10:41"}
+{"paper_id": "Gx8ujJTnG9", "reviewer": "jes", "filter_out": true, "note": "这个我已经知道答案了，但其实确实乍看看不太出这种学术挂名的东西，得靠sota llm筛", "ts": "2026-05-08T09:12:27"}
+{"paper_id": "PJdMrK79Mo", "reviewer": "jes", "filter_out": true, "note": "不咋有趣，属于领域太新所以干啥都能发的情况。", "ts": "2026-05-08T09:14:13"}
+{"paper_id": "p60Y6o85Cj", "reviewer": "jes", "filter_out": false, "note": "消除限制性假设！这篇论文的核心思想和我比较对齐。实现合理，等价性有证明，而且正在探索未被解决的领域。", "ts": "2026-05-08T09:16:41"}
+{"paper_id": "VPl3T43Hxb", "reviewer": "jes", "filter_out": false, "note": "不错，仍然在挑战GD的收敛性这个经典问题，证明了局部成立和下界。很扎实的能够指导非常大领域训练问题的研究", "ts": "2026-05-08T09:18:37"}
+{"paper_id": "pFOoOdaiue", "reviewer": "jes", "filter_out": true, "note": "在对抗强化学习中引入敌人的非理性部分，idea很简单，很可靠，但本质太轻松了，核心也是一个SOTA", "ts": "2026-05-08T09:20:40"}
+{"paper_id": "1ix6MGV2fz", "reviewer": "jes", "filter_out": false, "note": "很有趣的研究，本质上是agent网络的信息博弈论问题，建模合理，进一步提出算法。前沿且合理严谨。", "ts": "2026-05-08T09:22:12"}
+{"paper_id": "O2fUpyeRWs", "reviewer": "jes", "filter_out": false, "note": "解决了微小分支上的一个问题，并提供了另一个可选的算法，不错的工作。", "ts": "2026-05-08T09:23:16"}
+{"paper_id": "mlJLVigNHp", "reviewer": "jes", "filter_out": true, "note": "纯工程，压缩器和记忆管理", "ts": "2026-05-08T09:24:02"}
+{"paper_id": "riTiq3i21b", "reviewer": "jes", "filter_out": true, "note": "实证研究。本质上是对已有框架的拓展，本质上是工程问题。", "ts": "2026-05-08T09:24:22"}
+{"paper_id": "6hZAo6fZvJ", "reviewer": "jes", "filter_out": false, "note": "组合已有成果形成新的训练方法，最后提供典型的POC和benchmark。不好说，太典型了，总感觉会有几万篇这种玩意。起码他在摘要里说自己展示的是玩具问题了。", "ts": "2026-05-08T09:26:43"}
+{"paper_id": "l0ZzTvPfTw", "reviewer": "jes", "filter_out": true, "note": "工程问题，RNN硬件优化", "ts": "2026-05-08T09:28:08"}
