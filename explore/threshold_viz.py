@@ -16,7 +16,7 @@ def load_data():
         if not isinstance(parsed, dict):
             continue
         row = {"paper_id": r.get("paper_id"), "title": r.get("title", "")}
-        fields = [
+        score_fields = [
             ("mr", "mathematical_rigor"),
             ("tn", "theoretical_novelty"),
             ("md", "mathematical_depth"),
@@ -28,15 +28,13 @@ def load_data():
             ("sg", "scope_generality"),
             ("cs", "confidence_score"),
         ]
-        for abbr, key in fields:
+        for abbr, key in score_fields:
             val = parsed.get(key, {})
             row[abbr] = val.get("score") if isinstance(val, dict) else None
-        # 布尔字段
         mk = parsed.get("marketing_detected", {})
         row["marketing"] = mk.get("flag") if isinstance(mk, dict) else None
         hr = parsed.get("human_review_required", {})
         row["human_review"] = hr.get("flag") if isinstance(hr, dict) else None
-        # logical_chain integrity
         lc = parsed.get("logical_chain", {})
         row["integrity"] = lc.get("integrity") if isinstance(lc, dict) else None
         records.append(row)
@@ -45,88 +43,127 @@ def load_data():
 df = load_data()
 N_TOTAL = 30983
 
-st.title("论文过滤阈值可视化")
-st.caption(f"当前样本 {len(df)} 篇 · 总池 {N_TOTAL:,} 篇")
-
-FIELDS = {
-    "mr":  "mathematical_rigor",
-    "tn":  "theoretical_novelty",
-    "md":  "mathematical_depth",
-    "ar":  "assumption_realism",
-    "er":  "empirical_reliance",
-    "tea": "theory_experiment_alignment",
-    "cc":  "compute_complexity",
-    "ei":  "epistemological_intent",
-    "sg":  "scope_generality",
-    "cs":  "confidence_score",
+SCORE_FIELDS = {
+    "mr": "mathematical_rigor", "tn": "theoretical_novelty",
+    "md": "mathematical_depth", "ar": "assumption_realism",
+    "er": "empirical_reliance", "tea": "theory_experiment_alignment",
+    "cc": "compute_complexity", "ei": "epistemological_intent",
+    "sg": "scope_generality", "cs": "confidence_score",
 }
 
-st.sidebar.header("数值范围过滤")
-thresholds = {}
-for abbr, name in FIELDS.items():
-    col = df[abbr].dropna()
-    thresholds[abbr] = st.sidebar.slider(
-        name, 0.0, 10.0, (0.0, 10.0), step=0.5,
-        help=f"min={col.min():.1f} mean={col.mean():.1f} max={col.max():.1f}"
-    )
+# ---------- 熔断规则定义 ----------
+# 每条规则: {"name": str, "conditions": list of (field, op, value)}
+# op: "lt" | "gt" | "eq" | "in" (for integrity)
+DEFAULT_RULES = [
+    {
+        "name": "纯benchmark / 无理论",
+        "conditions": [("er", "gt", 7.5), ("mr", "lt", 3.0)],
+        "logic": "AND",
+    },
+    {
+        "name": "数学严谨度极低",
+        "conditions": [("mr", "lt", 2.0)],
+        "logic": "AND",
+    },
+    {
+        "name": "逻辑链缺失",
+        "conditions": [("integrity", "in", ["absent", "broken"])],
+        "logic": "AND",
+    },
+    {
+        "name": "营销包装",
+        "conditions": [("marketing", "eq", True)],
+        "logic": "AND",
+    },
+    {
+        "name": "置信度过低",
+        "conditions": [("cs", "lt", 3.0)],
+        "logic": "AND",
+    },
+]
 
-st.sidebar.header("布尔过滤")
-filter_marketing = st.sidebar.checkbox("丢弃 marketing_detected=True", value=False)
+def eval_condition(df, field, op, value):
+    col = df[field]
+    if op == "lt":
+        return col.fillna(999) < value
+    elif op == "gt":
+        return col.fillna(-999) > value
+    elif op == "eq":
+        return col.fillna(False) == value
+    elif op == "in":
+        return col.isin(value)
+    return pd.Series([False] * len(df))
 
-st.sidebar.header("logical_chain integrity")
-INTEGRITY_ORDER = ["intact", "partial", "broken", "absent"]
-integrity_counts = df["integrity"].value_counts()
-keep_integrity = st.sidebar.multiselect(
-    "保留以下等级",
-    options=INTEGRITY_ORDER,
-    default=INTEGRITY_ORDER,
-    format_func=lambda x: f"{x} ({integrity_counts.get(x, 0)}篇)"
-)
+def eval_rule(df, rule):
+    masks = [eval_condition(df, f, op, v) for f, op, v in rule["conditions"]]
+    result = masks[0]
+    for m in masks[1:]:
+        if rule["logic"] == "AND":
+            result = result & m
+        else:
+            result = result | m
+    return result
 
-# 过滤逻辑
-mask_keep = pd.Series([True] * len(df))
-for abbr, (lo, hi) in thresholds.items():
-    if lo > 0:
-        mask_keep &= df[abbr].fillna(0) >= lo
-    if hi < 10:
-        mask_keep &= df[abbr].fillna(10) <= hi
-if filter_marketing:
-    mask_keep &= df["marketing"].fillna(False) == False
-# human_review_required=True 强制保留，覆盖其他过滤条件
-mask_keep |= df["human_review"].fillna(False) == True
-if keep_integrity:
-    mask_keep &= df["integrity"].isin(keep_integrity)
+# ---------- 侧边栏 ----------
+st.sidebar.header("熔断规则（命中任意一条→熔断）")
 
-n_keep = mask_keep.sum()
-n_drop = len(df) - n_keep
-keep_ratio = n_keep / len(df)
+active_rules = []
+for i, rule in enumerate(DEFAULT_RULES):
+    enabled = st.sidebar.checkbox(f"规则{i+1}: {rule['name']}", value=True, key=f"rule_{i}")
+    if enabled:
+        active_rules.append(rule)
 
-n_marketing = df["marketing"].fillna(False).sum()
-n_human_review = df["human_review"].fillna(False).sum()
+st.sidebar.divider()
+st.sidebar.header("强制保留")
+force_keep_human_review = st.sidebar.checkbox("human_review=True 强制保留", value=True)
 
-col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric("保留", f"{n_keep} 篇", f"{keep_ratio:.1%}")
-col2.metric("丢弃", f"{n_drop} 篇", f"{1-keep_ratio:.1%}")
-col3.metric("推算到3万篇保留", f"{int(N_TOTAL * keep_ratio):,} 篇")
-col4.metric("marketing=True", f"{n_marketing} 篇", f"{n_marketing/len(df):.1%}")
-col5.metric("human_review=True", f"{n_human_review} 篇", f"{n_human_review/len(df):.1%}")
+# ---------- 计算 ----------
+# 每篇论文命中哪条规则
+rule_hits = pd.DataFrame({
+    f"规则{i+1}_{r['name']}": eval_rule(df, r)
+    for i, r in enumerate(DEFAULT_RULES)
+})
 
-# 分布图
+fused_mask = pd.Series([False] * len(df))
+for rule in active_rules:
+    fused_mask |= eval_rule(df, rule)
+
+if force_keep_human_review:
+    fused_mask &= ~(df["human_review"].fillna(False) == True)
+
+keep_mask = ~fused_mask
+keep_ratio = keep_mask.sum() / len(df)
+
+# ---------- 顶部指标 ----------
+st.title("论文熔断规则可视化")
+st.caption(f"样本 {len(df)} 篇 · 总池 {N_TOTAL:,} 篇")
+
+cols = st.columns(4)
+cols[0].metric("全量分析", f"{keep_mask.sum()} 篇", f"{keep_ratio:.1%}")
+cols[1].metric("熔断输出", f"{fused_mask.sum()} 篇", f"{1-keep_ratio:.1%}")
+cols[2].metric("推算3万篇全量", f"{int(N_TOTAL * keep_ratio):,} 篇")
+cols[3].metric("推算3万篇熔断", f"{int(N_TOTAL * (1-keep_ratio)):,} 篇")
+
+# ---------- 各规则命中统计 ----------
+st.subheader("各规则命中情况")
+rule_cols = st.columns(len(DEFAULT_RULES))
+for i, rule in enumerate(DEFAULT_RULES):
+    hit = eval_rule(df, rule).sum()
+    rule_cols[i].metric(f"规则{i+1}", f"{hit} 篇", rule["name"])
+
+# ---------- 分布图（按熔断/全量着色）----------
+st.subheader("各维度分布")
 fig, axes = plt.subplots(2, 5, figsize=(18, 7))
 axes = axes.flatten()
 
-for i, (abbr, name) in enumerate(FIELDS.items()):
+for i, (abbr, name) in enumerate(SCORE_FIELDS.items()):
     ax = axes[i]
-    col = df[abbr].dropna()
+    col_keep = df.loc[keep_mask, abbr].dropna()
+    col_fuse = df.loc[fused_mask, abbr].dropna()
     bins = np.arange(-0.25, 10.75, 0.5)
-    ax.hist(col[mask_keep[col.index]], bins=bins, color="#4CAF50", alpha=0.8, label="保留")
-    ax.hist(col[~mask_keep[col.index]], bins=bins, color="#f44336", alpha=0.6, label="丢弃")
-    lo, hi = thresholds[abbr]
-    if lo > 0:
-        ax.axvline(lo, color="red", linestyle="--", linewidth=1.5)
-    if hi < 10:
-        ax.axvline(hi, color="orange", linestyle="--", linewidth=1.5)
-    ax.set_title(f"{abbr} ({name[:18]})", fontsize=9)
+    ax.hist(col_keep, bins=bins, color="#4CAF50", alpha=0.8, label="全量")
+    ax.hist(col_fuse, bins=bins, color="#f44336", alpha=0.6, label="熔断")
+    ax.set_title(f"{abbr} ({name[:16]})", fontsize=9)
     ax.set_xlim(-0.5, 10.5)
     ax.tick_params(labelsize=8)
     if i == 0:
@@ -135,7 +172,14 @@ for i, (abbr, name) in enumerate(FIELDS.items()):
 plt.tight_layout()
 st.pyplot(fig)
 
-# 保留论文列表
-with st.expander(f"保留的 {n_keep} 篇论文"):
-    show_cols = ["title"] + list(FIELDS.keys()) + ["integrity", "marketing", "human_review"]
-    st.dataframe(df[mask_keep][show_cols].reset_index(drop=True), use_container_width=True)
+# ---------- 熔断论文明细 ----------
+with st.expander(f"熔断的 {fused_mask.sum()} 篇（命中规则）"):
+    fused_df = df[fused_mask].copy()
+    for i, rule in enumerate(DEFAULT_RULES):
+        fused_df[f"R{i+1}"] = eval_rule(df, rule)[fused_mask].values
+    show_cols = ["title", "mr", "er", "cs", "integrity", "marketing"] + [f"R{i+1}" for i in range(len(DEFAULT_RULES))]
+    st.dataframe(fused_df[show_cols].reset_index(drop=True), use_container_width=True)
+
+with st.expander(f"全量分析的 {keep_mask.sum()} 篇"):
+    show_cols = ["title"] + list(SCORE_FIELDS.keys()) + ["integrity", "marketing", "human_review"]
+    st.dataframe(df[keep_mask][show_cols].reset_index(drop=True), use_container_width=True)
