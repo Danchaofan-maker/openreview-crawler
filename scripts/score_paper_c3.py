@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from tqdm import tqdm
 
-PROMPT_PATH = "prompt_v0_8.md"
+PROMPT_PATH = "prompt_c3.md"
 SAMPLE_PATH = "data/sample_N50_c3test.json"
 OUTPUT_PATH = "data/llm_c3_v08_N50.jsonl"
 API_URL = "https://api.deepseek.com/v1/chat/completions"

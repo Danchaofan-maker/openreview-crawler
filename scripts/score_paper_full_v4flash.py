@@ -38,7 +38,7 @@ from tqdm import tqdm
 
 
 # ---------- 配置 ----------
-PROMPT_PATH = "prompt_flash.md"
+PROMPT_PATH = "deprecated_prompt_flash.md"
 RAW_DIR = "data/raw"
 OUTPUT_PATH = "data/llm_full_v4flash_run.jsonl"
 FAILURE_PATH = "data/llm_full_v4flash_failures.jsonl"

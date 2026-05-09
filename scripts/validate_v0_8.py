@@ -23,7 +23,7 @@ for line in (ROOT / ".env").read_text().strip().splitlines():
         os.environ[k.strip()] = v.strip().strip('"').strip("'")
 
 API_KEY = os.environ["DEEPSEEK_API_KEY"]
-PROMPT = re.sub(r"<!--.*?-->", "", (ROOT / "prompt.md").read_text(encoding="utf-8"), flags=re.DOTALL)
+PROMPT = re.sub(r"<!--.*?-->", "", (ROOT / "prompt_c2.md").read_text(encoding="utf-8"), flags=re.DOTALL)
 API_URL = "https://api.deepseek.com/v1/chat/completions"
 
 SCORED = ROOT / "data" / "llm_v4pro_thinking_N600_seed42.jsonl"

@@ -39,7 +39,7 @@ from tqdm import tqdm
 
 
 # ---------- 配置 ----------
-PROMPT_PATH   = "prompt.md"
+PROMPT_PATH   = "prompt_c1t.md"
 SAMPLE_PATH   = "data/sample_N600_seed42.json"
 OUTPUT_PATH   = "data/llm_v4pro_thinking_N600_seed42.jsonl"
 FAILURE_PATH  = "data/llm_v4pro_thinking_N600_seed42_failures.jsonl"

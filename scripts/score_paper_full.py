@@ -44,7 +44,7 @@ def load_prompt(path: str) -> str:
 
 
 # ---------- 配置 ----------
-PROMPT_PATH = "prompt.md"
+PROMPT_PATH = "prompt_c2.md"
 RAW_DIR = "data/raw"
 OUTPUT_PATH = "data/llm_full_run.jsonl"
 FAILURE_PATH = "data/llm_full_failures.jsonl"

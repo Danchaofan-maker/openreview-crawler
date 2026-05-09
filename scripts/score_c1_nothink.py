@@ -31,7 +31,7 @@ from tqdm import tqdm
 
 
 # ---------- 配置 ----------
-PROMPT_PATH  = "prompt_c1_nothink.md"
+PROMPT_PATH  = "prompt_c1nt.md"
 SAMPLE_PATH  = "data/sample_N50_c3test.json"
 OUTPUT_PATH  = "data/llm_c1_nothink_N50_test.jsonl"
 FAILURE_PATH = "data/llm_c1_nothink_N50_test_failures.jsonl"
