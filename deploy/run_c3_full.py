@@ -61,6 +61,11 @@ API_URL     = "https://api.deepseek.com/v1/chat/completions"
 # ─── C3 schema ───────────────────────────────────────────────────────────────
 SCORE_FIELDS = ("mr", "tn", "md", "ar", "er", "tea", "cc", "ei", "sg", "cs")
 
+# ─── DeepSeek 定价（促销价，截止 2026-05-31）────────────────────────────────
+PRICE_IN_MISS = 0.435  / 1_000_000   # $/token，cache miss
+PRICE_IN_HIT  = 0.003625 / 1_000_000 # $/token，cache hit
+PRICE_OUT     = 0.87   / 1_000_000   # $/token，输出
+
 # ─── 全局状态 ─────────────────────────────────────────────────────────────────
 _write_lock    = threading.Lock()
 _stats_lock    = threading.Lock()
@@ -70,9 +75,10 @@ _stats = {
     "ok": 0, "fail": 0,
     "fuse_true": 0, "fuse_false": 0,
     "tokens_out_compact": [], "tokens_out_full": [],
+    "tok_in_miss": 0, "tok_in_hit": 0, "tok_out": 0,   # 累计 token 计费
     "recent": [],
     "errors": [],
-    "concurrency_history": [],   # [(timestamp, limit), ...]
+    "concurrency_history": [],
 }
 
 
@@ -321,8 +327,11 @@ def process_one(paper: dict, system: str, model: str, api_key: str,
 
         record.update({
             "elapsed_s": round(elapsed, 1),
-            "tokens_in": usage.get("prompt_tokens"),
-            "tokens_out": usage.get("completion_tokens"),
+            "tokens_in":       usage.get("prompt_tokens"),
+            "tokens_in_hit":   usage.get("prompt_cache_hit_tokens", 0),
+            "tokens_in_miss":  usage.get("prompt_cache_miss_tokens",
+                                         usage.get("prompt_tokens", 0)),
+            "tokens_out":      usage.get("completion_tokens"),
             "content": content, "parsed": parsed,
             "ok": ok, "schema_ok": schema_ok, "fuse_ok": fuse_ok, "error": err,
         })
@@ -378,14 +387,17 @@ def sort_output():
 
 def make_dashboard(progress: Progress, total: int, controller: AdaptiveSemaphore) -> Panel:
     with _stats_lock:
-        ok     = _stats["ok"]
-        fail   = _stats["fail"]
-        ft     = _stats["fuse_true"]
-        tok_c  = _stats["tokens_out_compact"]
-        tok_f  = _stats["tokens_out_full"]
-        recent = list(_stats["recent"])
-        errors = list(_stats["errors"])
-        hist   = list(_stats["concurrency_history"])
+        ok             = _stats["ok"]
+        fail           = _stats["fail"]
+        ft             = _stats["fuse_true"]
+        tok_c          = _stats["tokens_out_compact"]
+        tok_f          = _stats["tokens_out_full"]
+        tok_in_miss    = _stats["tok_in_miss"]
+        tok_in_hit     = _stats["tok_in_hit"]
+        tok_out        = _stats["tok_out"]
+        recent         = list(_stats["recent"])
+        errors         = list(_stats["errors"])
+        hist           = list(_stats["concurrency_history"])
 
     done     = ok + fail
     fuse_pct = f"{ft/(ok or 1)*100:.1f}%" if ok else "-"
@@ -393,6 +405,15 @@ def make_dashboard(progress: Progress, total: int, controller: AdaptiveSemaphore
     avg_f    = f"{int(statistics.mean(tok_f))}" if tok_f else "-"
     cur_lim  = controller.limit
     cur_act  = controller.active
+
+    # 实时花费
+    cost_so_far = tok_in_miss * PRICE_IN_MISS + tok_in_hit * PRICE_IN_HIT + tok_out * PRICE_OUT
+    if done > 0:
+        cost_per_paper   = cost_so_far / done
+        cost_projected   = cost_per_paper * total
+        cost_remaining   = cost_per_paper * max(0, total - done)
+    else:
+        cost_per_paper = cost_projected = cost_remaining = 0.0
 
     # 并发趋势箭头（比较最近两次变化）
     if len(hist) >= 2:
@@ -410,6 +431,17 @@ def make_dashboard(progress: Progress, total: int, controller: AdaptiveSemaphore
         "[bold cyan]FUSE%[/bold cyan]",  fuse_pct,
         "[bold cyan]TOK紧凑[/bold cyan]", avg_c,
         "[bold cyan]TOK完整[/bold cyan]", avg_f,
+    )
+
+    # ── 花费行 ──
+    cost = Table.grid(padding=(0, 2))
+    for _ in range(8):
+        cost.add_column()
+    cost.add_row(
+        "[bold cyan]已花费[/bold cyan]",   f"[yellow]${cost_so_far:.4f}[/yellow]",
+        "[bold cyan]预计总计[/bold cyan]", f"[yellow]${cost_projected:.4f}[/yellow]",
+        "[bold cyan]剩余[/bold cyan]",     f"[yellow]${cost_remaining:.4f}[/yellow]",
+        "[bold cyan]单篇均值[/bold cyan]", f"${cost_per_paper:.5f}",
     )
 
     # ── 并发状态行 ──
@@ -451,6 +483,7 @@ def make_dashboard(progress: Progress, total: int, controller: AdaptiveSemaphore
     outer = Table.grid(padding=1)
     outer.add_row(progress)
     outer.add_row(stat)
+    outer.add_row(cost)
     outer.add_row(conc)
     outer.add_row(Columns([rec_table, err_table]))
     return Panel(outer,
@@ -535,6 +568,9 @@ def main():
 
     todo = todo[1:]
     with _stats_lock:
+        _stats["tok_in_miss"] += warmup_rec.get("tokens_in_miss") or 0
+        _stats["tok_in_hit"]  += warmup_rec.get("tokens_in_hit")  or 0
+        _stats["tok_out"]     += warmup_rec.get("tokens_out")     or 0
         _stats["ok"] += 1
         if wp.get("fuse") is True:
             _stats["fuse_true"] += 1
@@ -597,6 +633,11 @@ def main():
 
                 p = rec.get("parsed") or {}
                 with _stats_lock:
+                    # 累计 token（无论成败都计费）
+                    _stats["tok_in_miss"] += rec.get("tokens_in_miss") or 0
+                    _stats["tok_in_hit"]  += rec.get("tokens_in_hit")  or 0
+                    _stats["tok_out"]     += rec.get("tokens_out")     or 0
+
                     if rec.get("ok"):
                         _stats["ok"] += 1
                         if p.get("fuse") is True:
