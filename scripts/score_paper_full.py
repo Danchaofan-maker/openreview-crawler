@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import signal
 import sys
 import threading
@@ -34,6 +35,12 @@ from concurrent.futures import ThreadPoolExecutor, Future, as_completed
 
 import requests
 from tqdm import tqdm
+
+
+def load_prompt(path: str) -> str:
+    """读 prompt.md, 剥掉 <!-- ... --> HTML 注释 (允许在 prompt 里写只给人看的开发注释)"""
+    text = Path(path).read_text(encoding="utf-8")
+    return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
 
 
 # ---------- 配置 ----------
@@ -129,12 +136,11 @@ def load_done_ids() -> set[str]:
 
 # ---------- API 调用 ----------
 def build_user_message(paper: dict) -> str:
+    # 不传 venue/year, 避免会场偏见
     return (
         "<paper>\n"
         f"<paper_id>{paper.get('paper_id', '')}</paper_id>\n"
         f"<title>{paper.get('title', '')}</title>\n"
-        f"<venue>{paper.get('venue', '')}</venue>\n"
-        f"<year>{paper.get('year', '')}</year>\n"
         f"<abstract>{paper.get('abstract', '')}</abstract>\n"
         "</paper>"
     )
@@ -158,8 +164,7 @@ def call_with_retry(system: str, user: str, model: str, api_key: str) -> dict:
                         {"role": "user", "content": user},
                     ],
                     "stream": False,
-                    "thinking": {"type": "enabled"},
-                    "reasoning_effort": "high",
+                    "thinking": {"type": "disabled"},
                 },
                 timeout=900,
             )
@@ -211,7 +216,6 @@ def process_one(paper: dict, system: str, model: str, api_key: str) -> dict:
         msg = resp["choices"][0]["message"]
         usage = resp.get("usage", {})
 
-        reasoning = msg.get("reasoning_content", "") or ""
         content = (msg.get("content", "") or "").strip()
 
         try:
@@ -229,8 +233,6 @@ def process_one(paper: dict, system: str, model: str, api_key: str) -> dict:
             "tokens_out": usage.get("completion_tokens"),
             "tokens_cache_hit": usage.get("prompt_cache_hit_tokens"),
             "tokens_cache_miss": usage.get("prompt_cache_miss_tokens"),
-            "reasoning_chars": len(reasoning),
-            "reasoning": reasoning,
             "raw_content": content,
             "parsed": parsed,
             "ok": ok,
@@ -309,7 +311,7 @@ def main():
     Path(OUTPUT_PATH).parent.mkdir(parents=True, exist_ok=True)
     Path(LOG_PATH).parent.mkdir(parents=True, exist_ok=True)
 
-    system_prompt = Path(PROMPT_PATH).read_text(encoding="utf-8")
+    system_prompt = load_prompt(PROMPT_PATH)
     log(f"=== 启动全量打分 ===")
     log(f"模型={model}  并发={workers}  max_papers={max_papers}  max_cost=${max_cost}")
     log(f"prompt={len(system_prompt)} 字符")
