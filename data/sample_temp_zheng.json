@@ -1,0 +1,15 @@
+{
+  "source": "manual",
+  "seed": null,
+  "n": 1,
+  "samples": [
+    {
+      "paper_id": "zheng-2025-orlicz-variational",
+      "venue": "",
+      "year": 2025,
+      "title": "Orlicz-Polya-Szego不等式的数值验证平台及其在形状优化中的应用探索 / Berestycki & Lions (1983) 变分方法分析",
+      "authors": "郑自立 (Zili Zheng)",
+      "abstract": "本报告解析了 Berestycki & Lions (1983) 解决非线性标量场方程 (*)-Delta u=g(u) 的核心方法。报告指出其使用约束极小化结合对称重排绕过了 H^1(R^N) 空间中由平移不变性引起的紧致性缺失问题，并分析了该方法对经典 LP 空间工具的深度依赖。为验证经典 Polya-Szego (PS) 不等式向 Orlicz 空间的理论拓展，本报告构建并展示了一个 2D 数值验证平台。该平台的核心设计在于解耦：(1)一个纯几何的重排引擎，它基于分布函数 mu_f(t) 精确计算 f*；(2)一个可插拔的分析模块，它接收任意 Young 函数作为输入，以计算广义能量 E_Phi(f)=int Phi(|nabla f|)dx。平台通过了 Phi(t)=t^2（经典L2）的向下兼容测试和 Phi(t)=t^2+t^4 的广义性测试。在所有案例中，平台均数值验证了 Orlicz-PS 不等式 E_Phi(f)>=E_Phi(f*)，并展示了在形状优化问题上的应用潜力。"
+    }
+  ]
+}
