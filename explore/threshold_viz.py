@@ -61,12 +61,12 @@ FIELDS = {
     "cs":  "confidence_score",
 }
 
-st.sidebar.header("数值阈值（低于此值→丢弃）")
+st.sidebar.header("数值范围过滤")
 thresholds = {}
 for abbr, name in FIELDS.items():
     col = df[abbr].dropna()
     thresholds[abbr] = st.sidebar.slider(
-        name, 0.0, 10.0, 0.0, step=0.5,
+        name, 0.0, 10.0, (0.0, 10.0), step=0.5,
         help=f"min={col.min():.1f} mean={col.mean():.1f} max={col.max():.1f}"
     )
 
@@ -85,9 +85,11 @@ keep_integrity = st.sidebar.multiselect(
 
 # 过滤逻辑
 mask_keep = pd.Series([True] * len(df))
-for abbr, thresh in thresholds.items():
-    if thresh > 0:
-        mask_keep &= df[abbr].fillna(0) >= thresh
+for abbr, (lo, hi) in thresholds.items():
+    if lo > 0:
+        mask_keep &= df[abbr].fillna(0) >= lo
+    if hi < 10:
+        mask_keep &= df[abbr].fillna(10) <= hi
 if filter_marketing:
     mask_keep &= df["marketing"].fillna(False) == False
 # human_review_required=True 强制保留，覆盖其他过滤条件
@@ -119,9 +121,11 @@ for i, (abbr, name) in enumerate(FIELDS.items()):
     bins = np.arange(-0.25, 10.75, 0.5)
     ax.hist(col[mask_keep[col.index]], bins=bins, color="#4CAF50", alpha=0.8, label="保留")
     ax.hist(col[~mask_keep[col.index]], bins=bins, color="#f44336", alpha=0.6, label="丢弃")
-    thresh = thresholds[abbr]
-    if thresh > 0:
-        ax.axvline(thresh, color="red", linestyle="--", linewidth=1.5)
+    lo, hi = thresholds[abbr]
+    if lo > 0:
+        ax.axvline(lo, color="red", linestyle="--", linewidth=1.5)
+    if hi < 10:
+        ax.axvline(hi, color="orange", linestyle="--", linewidth=1.5)
     ax.set_title(f"{abbr} ({name[:18]})", fontsize=9)
     ax.set_xlim(-0.5, 10.5)
     ax.tick_params(labelsize=8)
