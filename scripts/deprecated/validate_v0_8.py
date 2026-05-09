@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 for line in (ROOT / ".env").read_text().strip().splitlines():
     if "=" in line and not line.startswith("#"):
