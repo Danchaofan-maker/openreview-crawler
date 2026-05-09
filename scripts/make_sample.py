@@ -80,8 +80,11 @@ def main():
     if n > total_pool:
         sys.exit(f"ERROR: 请求 {n} 篇，但池子只有 {total_pool} 篇")
 
+    # 先按 paper_id 排序，消除文件加载顺序的影响，保证相同池子内容下结果可复现
+    pool.sort(key=lambda r: r["paper_id"])
     rng = random.Random(seed)
-    chosen = rng.sample(pool, n)
+    rng.shuffle(pool)
+    chosen = pool[:n]
     samples = [to_sample(r) for r in chosen]
 
     output = {
