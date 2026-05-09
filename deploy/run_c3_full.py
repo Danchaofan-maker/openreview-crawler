@@ -371,7 +371,7 @@ def make_dashboard(progress: Progress, total: int, t_start: float) -> Table:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n",       type=int,   default=None,           help="处理前 N 篇（默认全量）")
-    parser.add_argument("--workers", type=int,   default=32,             help="并发线程数")
+    parser.add_argument("--workers", type=int,   default=128,            help="并发线程数")
     parser.add_argument("--model",   type=str,   default="deepseek-v4-pro")
     parser.add_argument("--input",   type=str,   default=str(INPUT_PATH))
     args = parser.parse_args()
