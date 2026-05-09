@@ -1,0 +1,63 @@
+{
+  "source_dir": "data/raw",
+  "source_files": [
+    "colt_metadata.jsonl",
+    "iclr_2024_metadata.jsonl",
+    "iclr_2025_metadata.jsonl",
+    "iclr_2026_metadata.jsonl",
+    "icml_2024_metadata.jsonl",
+    "icml_2025_metadata.jsonl",
+    "jmlr_metadata.jsonl",
+    "neurips_2024_metadata.jsonl",
+    "neurips_2025_metadata.jsonl",
+    "simods_metadata.jsonl",
+    "siopt_metadata.jsonl",
+    "tmlr_metadata.jsonl"
+  ],
+  "seed": 42,
+  "n": 5,
+  "total_pool": 30983,
+  "created_at": "2026-05-09T12:00:35.535518+00:00",
+  "samples": [
+    {
+      "paper_id": "83pV20DD2s",
+      "venue": "NeurIPS_2024",
+      "year": 2024,
+      "title": "Learning from Pattern Completion: Self-supervised Controllable Generation",
+      "authors": "Zhiqiang Chen; Guofan Fan; Jinying Gao; Lei Ma; Bo Lei; Tiejun Huang; Shan Yu",
+      "abstract": "The human brain exhibits a strong ability to spontaneously associate different visual attributes of the same or similar visual scene, such as associating sketches and graffiti with real-world visual objects, usually without supervising information. In contrast, in the field of artificial intelligence, controllable generation methods like ControlNet heavily rely on annotated training datasets such as depth maps, semantic segmentation maps, and poses, which limits the method’s scalability. Inspired by the neural mechanisms that may contribute to the brain’s associative power, specifically the cortical modularization and hippocampal pattern completion, here we propose a self-supervised controllable generation (SCG) framework. Firstly, we introduce an equivariance constraint to promote inter-module independence and intra-module correlation in a modular autoencoder network, thereby achieving functional specialization. Subsequently, based on these specialized modules, we employ a self-supervised pattern completion approach for controllable generation training. Experimental results demonstrate that the proposed modular autoencoder effectively achieves functional specialization, including the modular processing of color, brightness, and edge detection, and exhibits brain-like features including orientation selectivity, color antagonism, and center-surround receptive fields. Through self-supervised training, associative generation capabilities spontaneously emerge in SCG, demonstrating excellent zero-shot generalization ability to various tasks such as superresolution, dehaze and associative or conditional generation on painting, sketches, and ancient graffiti. Compared to the previous representative method ControlNet, our proposed approach not only demonstrates superior robustness in more challenging high-noise scenarios but also possesses more promising scalability potential due to its self-supervised manner. Codes are released on Github and Gitee."
+    },
+    {
+      "paper_id": "IxmWIkcKs5",
+      "venue": "ICLR_2025",
+      "year": 2025,
+      "title": "A Simple yet Effective $\\Delta\\Delta G$ Predictor is An Unsupervised Antibody Optimizer and Explainer",
+      "authors": "Lirong Wu; Yunfan Liu; Haitao Lin; Yufei Huang; Guojiang Zhao; Zhifeng Gao; Stan Z. Li",
+      "abstract": "The proteins that exist today have been optimized over billions of years of natural evolution, during which nature creates random mutations and selects them. The discovery of functionally promising mutations is challenged by the limited evolutionary accessible regions, i.e., only a small region on the fitness landscape is beneficial. There have been numerous priors used to constrain protein evolution to regions of landscapes with high-fitness variants, among which the change in binding free energy ($\\Delta\\Delta G$) of protein complexes upon mutations is one of the most commonly used priors. However, the huge mutation space poses two challenges: (1) how to improve the efficiency of $\\Delta\\Delta G$ prediction for fast mutation screening; and (2) how to explain mutation preferences and efficiently explore accessible evolutionary regions. To address these challenges, we propose a lightweight $\\Delta\\Delta G$ predictor (Light-DDG), which adopts a structure-aware Transformer as the backbone and enhances it by knowledge distilled from existing powerful but computationally heavy $\\Delta\\Delta G$ predictors. Additionally, we augmented, annotated, and released a large-scale dataset containing millions of mutation data for pre-training Light-DDG. We find that such a simple yet effective Light-DDG can serve as a good unsupervised antibody optimizer and explainer. For the target antibody, we propose a novel Mutation Explainer to learn mutation preferences, which accounts for the marginal benefit of each mutation per residue. To further explore accessible evolutionary regions, we conduct preference-guided antibody optimization and evaluate antibody candidates quickly using Light-DDG to identify desirable mutations. Extensive experiments have demonstrated the effectiveness of Light-DDG in terms of test generalizability, noise robustness, and inference practicality, e.g., 89.7$\\times$ inference acceleration and 15.45\\% performance gains over previous state-of-the-art baselines. A case study of SARS-CoV-2 further demonstrates the crucial role of Light-DDG for mutation explanation and antibody optimization."
+    },
+    {
+      "paper_id": "Ts95eXsPBc",
+      "venue": "ICLR_2024",
+      "year": 2024,
+      "title": "Spatially-Aware Transformers for Embodied Agents",
+      "authors": "Junmo Cho; Jaesik Yoon; Sungjin Ahn",
+      "abstract": "Episodic memory plays a crucial role in various cognitive processes, such as the ability to mentally recall past events. While cognitive science emphasizes the significance of spatial context in the formation and retrieval of episodic memory, the current primary approach to implementing episodic memory in AI systems is through transformers that store temporally ordered experiences, which overlooks the spatial dimension. As a result, it is unclear how the underlying structure could be extended to incorporate the spatial axis beyond temporal order alone and thereby what benefits can be obtained. To address this, this paper explores the use of Spatially-Aware Transformer models that incorporate spatial information. These models enable the creation of place-centric episodic memory that considers both temporal and spatial dimensions. Adopting this approach, we demonstrate that memory utilization efficiency can be improved, leading to enhanced accuracy in various place-centric downstream tasks. Additionally, we propose the Adaptive Memory Allocator, a memory management method based on reinforcement learning that aims to optimize efficiency of memory utilization. Our experiments demonstrate the advantages of our proposed model in various environments and across multiple downstream tasks, including prediction, generation, reasoning, and reinforcement learning. The source code for our models and experiments will be available at \\href{https://github.com/spatially_aware_transformer}{https://github.com/spatially_aware_transformer}."
+    },
+    {
+      "paper_id": "UpzRoxVbQD",
+      "venue": "NeurIPS_2025",
+      "year": 2025,
+      "title": "Tight Bounds on the Distortion of Randomized and Deterministic Distributed Voting",
+      "authors": "Mohammad Abam; Davoud Kareshki; Marzie Nilipour; MohammadHossein Paydar; Masoud Seddighin",
+      "abstract": "We study metric distortion in distributed voting, where $n$ voters are partitioned into $k$ groups, each selecting a local representative, and a final winner is chosen from these representatives (or from the entire set of candidates). This setting models systems like U.S. presidential elections, where state-level decisions determine the national outcome. We focus on four cost objectives from Anshelevich \\et~\\cite{anshelevich2022distortion}: $\\avgavg$, $\\avgmax$, $\\maxavg$, and $\\maxmax$. We present improved distortion bounds for both deterministic and randomized mechanisms, offering a near-complete characterization of distortion in this model.\n\nFor deterministic mechanisms, we reduce the upper bound for $\\avgmax$ from $11$ to $7$, establish a tight lower bound of $5$ for $\\maxavg$ (improving on $2+\\sqrt{5}$), and tighten the upper bound for $\\maxmax$ from $5$ to $3$.\nFor randomized mechanisms, we consider two settings: (i) only the second stage is randomized, and (ii) both stages may be randomized. In case (i), we prove tight bounds: $5\\!-\\!2/k$ for $\\avgavg$, $3$ for $\\avgmax$ and $\\maxmax$, and $5$ for $\\maxavg$. In case (ii), we show tight bounds of $3$ for $\\maxavg$ and $\\maxmax$, and nearly tight bounds for $\\avgavg$ and $\\avgmax$ within $[3\\!-\\!2/n,\\ 3\\!-\\!2/(kn^*)]$ and $[3\\!-\\!2/n,\\ 3]$, respectively, where $n^*$ denotes the largest group size."
+    },
+    {
+      "paper_id": "iFPUEBwwuT",
+      "venue": "ICLR_2026",
+      "year": 2026,
+      "title": "Topology-Preserved Auto-regressive Mesh Generation in the Manner of Weaving Silk",
+      "authors": "Gaochao Song; Zibo Zhao; Haohan Weng; Jingbo Zeng; Rongfei Jia; Shenghua Gao",
+      "abstract": "Existing auto-regressive mesh generation approaches suffer from ineffective topology preservation, which is crucial for practical applications. \nThis limitation stems from previous mesh tokenization methods treating meshes as simple collections of equivalent triangles, lacking awareness of the overall topological structure during generation. To address this issue, we propose a novel mesh tokenization algorithm that provides a canonical topological framework through vertex layering and ordering, ensuring critical geometric properties including manifoldness, watertightness, face normal consistency, and part awareness in the generated meshes. Measured by Compression Ratio and Bits-per-face, we also achieved state-of-the-art compression efficiency. Furthermore, we introduce an online non-manifold data processing algorithm and a training resampling strategy to expand the scale of trainable dataset and avoid costly manual data curation.\nExperimental results demonstrate the effectiveness of our approach, showcasing not only intricate mesh generation but also significantly improved geometric integrity."
+    }
+  ]
+}
