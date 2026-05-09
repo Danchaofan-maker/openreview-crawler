@@ -1,11 +1,12 @@
-import json, pathlib
+import json, pathlib, uuid
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-st.set_page_config(page_title="论文过滤阈值", layout="wide")
+st.set_page_config(page_title="论文熔断规则配置", layout="wide")
 
+# ── 数据加载 ────────────────────────────────────────────────
 @st.cache_data
 def load_data():
     lines = pathlib.Path("data/llm_v4pro_thinking_N600_seed42.jsonl").read_text().strip().split("\n")
@@ -16,19 +17,7 @@ def load_data():
         if not isinstance(parsed, dict):
             continue
         row = {"paper_id": r.get("paper_id"), "title": r.get("title", "")}
-        score_fields = [
-            ("mr", "mathematical_rigor"),
-            ("tn", "theoretical_novelty"),
-            ("md", "mathematical_depth"),
-            ("ar", "assumption_realism"),
-            ("er", "empirical_reliance"),
-            ("tea", "theory_experiment_alignment"),
-            ("cc", "compute_complexity"),
-            ("ei", "epistemological_intent"),
-            ("sg", "scope_generality"),
-            ("cs", "confidence_score"),
-        ]
-        for abbr, key in score_fields:
+        for abbr, key in SCORE_FIELDS.items():
             val = parsed.get(key, {})
             row[abbr] = val.get("score") if isinstance(val, dict) else None
         mk = parsed.get("marketing_detected", {})
@@ -40,9 +29,6 @@ def load_data():
         records.append(row)
     return pd.DataFrame(records)
 
-df = load_data()
-N_TOTAL = 30983
-
 SCORE_FIELDS = {
     "mr": "mathematical_rigor", "tn": "theoretical_novelty",
     "md": "mathematical_depth", "ar": "assumption_realism",
@@ -50,136 +36,202 @@ SCORE_FIELDS = {
     "cc": "compute_complexity", "ei": "epistemological_intent",
     "sg": "scope_generality", "cs": "confidence_score",
 }
+BOOL_FIELDS  = {"marketing": "marketing_detected", "human_review": "human_review_required"}
+ENUM_FIELDS  = {"integrity": ["intact", "partial", "broken", "absent"]}
+ALL_FIELDS   = list(SCORE_FIELDS) + list(BOOL_FIELDS) + list(ENUM_FIELDS)
+FIELD_LABELS = {**SCORE_FIELDS, **BOOL_FIELDS, "integrity": "logical_chain.integrity"}
 
-# ---------- 熔断规则定义 ----------
-# 每条规则: {"name": str, "conditions": list of (field, op, value)}
-# op: "lt" | "gt" | "eq" | "in" (for integrity)
-DEFAULT_RULES = [
-    {
-        "name": "纯benchmark / 无理论",
-        "conditions": [("er", "gt", 7.5), ("mr", "lt", 3.0)],
-        "logic": "AND",
-    },
-    {
-        "name": "数学严谨度极低",
-        "conditions": [("mr", "lt", 2.0)],
-        "logic": "AND",
-    },
-    {
-        "name": "逻辑链缺失",
-        "conditions": [("integrity", "in", ["absent", "broken"])],
-        "logic": "AND",
-    },
-    {
-        "name": "营销包装",
-        "conditions": [("marketing", "eq", True)],
-        "logic": "AND",
-    },
-    {
-        "name": "置信度过低",
-        "conditions": [("cs", "lt", 3.0)],
-        "logic": "AND",
-    },
-]
+df = load_data()
+N_TOTAL = 30983
 
-def eval_condition(df, field, op, value):
-    col = df[field]
-    if op == "lt":
-        return col.fillna(999) < value
-    elif op == "gt":
-        return col.fillna(-999) > value
-    elif op == "eq":
-        return col.fillna(False) == value
-    elif op == "in":
-        return col.isin(value)
-    return pd.Series([False] * len(df))
+# ── Session state 初始化 ─────────────────────────────────────
+def new_condition():
+    return {"id": str(uuid.uuid4()), "field": "mr", "op": "lt", "value": 3.0}
+
+def new_rule():
+    return {
+        "id": str(uuid.uuid4()),
+        "name": f"规则{len(st.session_state.rules)+1}",
+        "enabled": True,
+        "negate": False,
+        "internal_logic": "AND",
+        "conditions": [new_condition()],
+    }
+
+if "rules" not in st.session_state:
+    st.session_state.rules = [
+        {"id": str(uuid.uuid4()), "name": "数学严谨度极低", "enabled": True, "negate": False,
+         "internal_logic": "AND", "conditions": [{"id": str(uuid.uuid4()), "field": "mr", "op": "lt", "value": 2.0}]},
+        {"id": str(uuid.uuid4()), "name": "纯benchmark", "enabled": True, "negate": False,
+         "internal_logic": "AND", "conditions": [
+             {"id": str(uuid.uuid4()), "field": "er", "op": "gt", "value": 7.5},
+             {"id": str(uuid.uuid4()), "field": "mr", "op": "lt", "value": 3.0},
+         ]},
+        {"id": str(uuid.uuid4()), "name": "逻辑链缺失", "enabled": True, "negate": False,
+         "internal_logic": "AND", "conditions": [{"id": str(uuid.uuid4()), "field": "integrity", "op": "in", "value": ["absent", "broken"]}]},
+    ]
+if "inter_logic" not in st.session_state:
+    st.session_state.inter_logic = "OR"
+if "force_keep_hr" not in st.session_state:
+    st.session_state.force_keep_hr = True
+
+# ── 条件求值 ─────────────────────────────────────────────────
+def eval_cond(df, cond):
+    f, op, v = cond["field"], cond["op"], cond["value"]
+    col = df[f]
+    if op == "lt":  return col.fillna(999)  < v
+    if op == "lte": return col.fillna(999)  <= v
+    if op == "gt":  return col.fillna(-999) > v
+    if op == "gte": return col.fillna(-999) >= v
+    if op == "eq":  return col.fillna(object()) == v
+    if op == "neq": return col.fillna(object()) != v
+    if op == "in":  return col.isin(v if isinstance(v, list) else [v])
+    return pd.Series([False]*len(df))
 
 def eval_rule(df, rule):
-    masks = [eval_condition(df, f, op, v) for f, op, v in rule["conditions"]]
+    masks = [eval_cond(df, c) for c in rule["conditions"]]
+    if not masks:
+        return pd.Series([False]*len(df))
     result = masks[0]
     for m in masks[1:]:
-        if rule["logic"] == "AND":
-            result = result & m
-        else:
-            result = result | m
-    return result
+        result = (result & m) if rule["internal_logic"] == "AND" else (result | m)
+    return ~result if rule.get("negate") else result
 
-# ---------- 侧边栏 ----------
-st.sidebar.header("熔断规则（命中任意一条→熔断）")
+def eval_all(df, rules, inter_logic, force_keep_hr):
+    active = [r for r in rules if r["enabled"]]
+    if not active:
+        return pd.Series([False]*len(df))
+    hits = [eval_rule(df, r) for r in active]
+    fused = hits[0]
+    for h in hits[1:]:
+        fused = (fused & h) if inter_logic == "AND" else (fused | h)
+    if force_keep_hr:
+        fused &= ~(df["human_review"].fillna(False) == True)
+    return fused
 
-active_rules = []
-for i, rule in enumerate(DEFAULT_RULES):
-    enabled = st.sidebar.checkbox(f"规则{i+1}: {rule['name']}", value=True, key=f"rule_{i}")
-    if enabled:
-        active_rules.append(rule)
+# ── 条件编辑器 ───────────────────────────────────────────────
+def condition_editor(rule_idx, cond, cond_idx, prefix):
+    cols = st.columns([2, 1.5, 2.5, 0.5])
+    field = cols[0].selectbox("字段", ALL_FIELDS,
+        index=ALL_FIELDS.index(cond["field"]),
+        format_func=lambda x: FIELD_LABELS.get(x, x),
+        key=f"{prefix}_field")
+    cond["field"] = field
 
-st.sidebar.divider()
-st.sidebar.header("强制保留")
-force_keep_human_review = st.sidebar.checkbox("human_review=True 强制保留", value=True)
+    if field in SCORE_FIELDS:
+        op_opts = {"<": "lt", "≤": "lte", ">": "gt", "≥": "gte", "=": "eq"}
+        op_label = cols[1].selectbox("运算", list(op_opts),
+            index=list(op_opts.values()).index(cond["op"]) if cond["op"] in op_opts.values() else 0,
+            key=f"{prefix}_op")
+        cond["op"] = op_opts[op_label]
+        val = cols[2].slider("值", 0.0, 10.0,
+            float(cond["value"]) if isinstance(cond["value"], (int, float)) else 0.0,
+            step=0.5, key=f"{prefix}_val")
+        cond["value"] = val
+    elif field in BOOL_FIELDS:
+        cond["op"] = "eq"
+        val = cols[1].radio("值", [True, False],
+            index=0 if cond.get("value") is True else 1,
+            horizontal=True, key=f"{prefix}_val")
+        cond["value"] = val
+        cols[2].empty()
+    else:  # integrity
+        cond["op"] = "in"
+        opts = ENUM_FIELDS["integrity"]
+        val = cols[2].multiselect("属于", opts,
+            default=cond["value"] if isinstance(cond["value"], list) else opts[:2],
+            key=f"{prefix}_val")
+        cond["value"] = val
+        cols[1].empty()
 
-# ---------- 计算 ----------
-# 每篇论文命中哪条规则
-rule_hits = pd.DataFrame({
-    f"规则{i+1}_{r['name']}": eval_rule(df, r)
-    for i, r in enumerate(DEFAULT_RULES)
-})
+    if cols[3].button("✕", key=f"{prefix}_del"):
+        st.session_state.rules[rule_idx]["conditions"].pop(cond_idx)
+        st.rerun()
 
-fused_mask = pd.Series([False] * len(df))
-for rule in active_rules:
-    fused_mask |= eval_rule(df, rule)
+# ── 规则编辑面板 ─────────────────────────────────────────────
+st.title("熔断规则配置")
 
-if force_keep_human_review:
-    fused_mask &= ~(df["human_review"].fillna(False) == True)
+# 规则间逻辑 + 全局设置
+top = st.columns([2, 2, 3])
+st.session_state.inter_logic = top[0].radio(
+    "规则间逻辑", ["OR（任一命中→熔断）", "AND（全部命中→熔断）"],
+    index=0 if st.session_state.inter_logic == "OR" else 1,
+    horizontal=True
+).split("（")[0]
+st.session_state.force_keep_hr = top[1].checkbox("human_review=True 强制保留", value=st.session_state.force_keep_hr)
 
-keep_mask = ~fused_mask
+rules_to_delete = []
+for ri, rule in enumerate(st.session_state.rules):
+    with st.expander(f"{'✅' if rule['enabled'] else '⬜'} {rule['name']}", expanded=True):
+        h1, h2, h3, h4, h5 = st.columns([2.5, 1.2, 1.2, 1.2, 0.8])
+        rule["name"] = h1.text_input("规则名", rule["name"], key=f"rname_{rule['id']}")
+        rule["enabled"] = h2.checkbox("启用", rule["enabled"], key=f"ren_{rule['id']}")
+        rule["negate"] = h3.checkbox("取反(NOT)", rule["negate"], key=f"rneg_{rule['id']}")
+        rule["internal_logic"] = h4.radio("条件间", ["AND", "OR"],
+            index=0 if rule["internal_logic"] == "AND" else 1,
+            horizontal=True, key=f"rlog_{rule['id']}")
+        if h5.button("删除规则", key=f"rdel_{rule['id']}"):
+            rules_to_delete.append(ri)
+
+        for ci, cond in enumerate(rule["conditions"]):
+            condition_editor(ri, cond, ci, f"c_{rule['id']}_{cond['id']}")
+
+        if st.button("＋ 添加条件", key=f"radd_{rule['id']}"):
+            rule["conditions"].append(new_condition())
+            st.rerun()
+
+for ri in sorted(rules_to_delete, reverse=True):
+    st.session_state.rules.pop(ri)
+if rules_to_delete:
+    st.rerun()
+
+if st.button("＋ 新增规则"):
+    st.session_state.rules.append(new_rule())
+    st.rerun()
+
+# ── 结果计算 ─────────────────────────────────────────────────
+st.divider()
+fused_mask = eval_all(df, st.session_state.rules, st.session_state.inter_logic, st.session_state.force_keep_hr)
+keep_mask  = ~fused_mask
 keep_ratio = keep_mask.sum() / len(df)
 
-# ---------- 顶部指标 ----------
-st.title("论文熔断规则可视化")
-st.caption(f"样本 {len(df)} 篇 · 总池 {N_TOTAL:,} 篇")
+m = st.columns(4)
+m[0].metric("全量分析", f"{keep_mask.sum()} 篇", f"{keep_ratio:.1%}")
+m[1].metric("熔断输出", f"{fused_mask.sum()} 篇", f"{1-keep_ratio:.1%}")
+m[2].metric("推算3万→全量", f"{int(N_TOTAL*keep_ratio):,} 篇")
+m[3].metric("推算3万→熔断", f"{int(N_TOTAL*(1-keep_ratio)):,} 篇")
 
-cols = st.columns(4)
-cols[0].metric("全量分析", f"{keep_mask.sum()} 篇", f"{keep_ratio:.1%}")
-cols[1].metric("熔断输出", f"{fused_mask.sum()} 篇", f"{1-keep_ratio:.1%}")
-cols[2].metric("推算3万篇全量", f"{int(N_TOTAL * keep_ratio):,} 篇")
-cols[3].metric("推算3万篇熔断", f"{int(N_TOTAL * (1-keep_ratio)):,} 篇")
+# 各规则命中数
+active_rules = [r for r in st.session_state.rules if r["enabled"]]
+if active_rules:
+    st.subheader("各规则命中")
+    rcols = st.columns(len(active_rules))
+    for i, rule in enumerate(active_rules):
+        hit = eval_rule(df, rule).sum()
+        rcols[i].metric(rule["name"], f"{hit} 篇")
 
-# ---------- 各规则命中统计 ----------
-st.subheader("各规则命中情况")
-rule_cols = st.columns(len(DEFAULT_RULES))
-for i, rule in enumerate(DEFAULT_RULES):
-    hit = eval_rule(df, rule).sum()
-    rule_cols[i].metric(f"规则{i+1}", f"{hit} 篇", rule["name"])
-
-# ---------- 分布图（按熔断/全量着色）----------
-st.subheader("各维度分布")
+# 分布图
 fig, axes = plt.subplots(2, 5, figsize=(18, 7))
-axes = axes.flatten()
-
 for i, (abbr, name) in enumerate(SCORE_FIELDS.items()):
-    ax = axes[i]
-    col_keep = df.loc[keep_mask, abbr].dropna()
-    col_fuse = df.loc[fused_mask, abbr].dropna()
-    bins = np.arange(-0.25, 10.75, 0.5)
-    ax.hist(col_keep, bins=bins, color="#4CAF50", alpha=0.8, label="全量")
-    ax.hist(col_fuse, bins=bins, color="#f44336", alpha=0.6, label="熔断")
+    ax = axes.flatten()[i]
+    ax.hist(df.loc[keep_mask,  abbr].dropna(), bins=np.arange(-0.25,10.75,0.5), color="#4CAF50", alpha=0.8, label="全量")
+    ax.hist(df.loc[fused_mask, abbr].dropna(), bins=np.arange(-0.25,10.75,0.5), color="#f44336", alpha=0.6, label="熔断")
     ax.set_title(f"{abbr} ({name[:16]})", fontsize=9)
     ax.set_xlim(-0.5, 10.5)
     ax.tick_params(labelsize=8)
     if i == 0:
         ax.legend(fontsize=7)
-
 plt.tight_layout()
 st.pyplot(fig)
 
-# ---------- 熔断论文明细 ----------
-with st.expander(f"熔断的 {fused_mask.sum()} 篇（命中规则）"):
-    fused_df = df[fused_mask].copy()
-    for i, rule in enumerate(DEFAULT_RULES):
-        fused_df[f"R{i+1}"] = eval_rule(df, rule)[fused_mask].values
-    show_cols = ["title", "mr", "er", "cs", "integrity", "marketing"] + [f"R{i+1}" for i in range(len(DEFAULT_RULES))]
-    st.dataframe(fused_df[show_cols].reset_index(drop=True), use_container_width=True)
+# 明细
+with st.expander(f"熔断 {fused_mask.sum()} 篇"):
+    fd = df[fused_mask].copy()
+    for r in active_rules:
+        fd[r["name"]] = eval_rule(df, r)[fused_mask].values
+    show = ["title","mr","er","cs","integrity","marketing"] + [r["name"] for r in active_rules]
+    st.dataframe(fd[show].reset_index(drop=True), use_container_width=True)
 
-with st.expander(f"全量分析的 {keep_mask.sum()} 篇"):
-    show_cols = ["title"] + list(SCORE_FIELDS.keys()) + ["integrity", "marketing", "human_review"]
-    st.dataframe(df[keep_mask][show_cols].reset_index(drop=True), use_container_width=True)
+with st.expander(f"全量分析 {keep_mask.sum()} 篇"):
+    show = ["title"] + list(SCORE_FIELDS) + ["integrity","marketing","human_review"]
+    st.dataframe(df[keep_mask][show].reset_index(drop=True), use_container_width=True)
