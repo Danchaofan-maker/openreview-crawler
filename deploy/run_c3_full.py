@@ -412,6 +412,44 @@ def main():
     signal.signal(signal.SIGINT,  _on_signal)
     signal.signal(signal.SIGTERM, _on_signal)
 
+    # ── Warmup：先跑第一篇，验证全链路 ──
+    console.print("\n[bold yellow]▶ Warmup[/bold yellow] 发送第一篇验证管道...")
+    warmup_paper = todo[0]
+    warmup_rec   = process_one(warmup_paper, system, args.model, api_key,
+                               pid_to_order[warmup_paper["paper_id"]])
+    append_jsonl(warmup_rec)
+
+    if not warmup_rec.get("ok"):
+        console.print(f"[bold red]✗ Warmup 失败，终止。[/bold red]")
+        console.print(f"  paper_id : {warmup_rec['paper_id']}")
+        console.print(f"  error    : {warmup_rec.get('error','')}")
+        sys.exit(1)
+
+    wp = warmup_rec.get("parsed", {})
+    console.print(
+        f"[bold green]✓ Warmup 通过[/bold green]  "
+        f"ig=[cyan]{wp.get('ig','')}[/cyan]  "
+        f"fuse=[cyan]{wp.get('fuse')}[/cyan]  "
+        f"mr={wp.get('mr','-')}  tn={wp.get('tn','-')}  "
+        f"tok_out={warmup_rec.get('tokens_out','-')}  "
+        f"elapsed={warmup_rec.get('elapsed_s','-')}s"
+    )
+    console.print(f"[dim]管道验证通过，启动 {args.workers} 并发...[/dim]\n")
+
+    # warmup 篇已完成，从剩余列表继续
+    todo = todo[1:]
+    with _stats_lock:
+        _stats["ok"] += 1
+        if wp.get("fuse") is True:
+            _stats["fuse_true"] += 1
+            if warmup_rec.get("tokens_out"):
+                _stats["tokens_out_compact"].append(warmup_rec["tokens_out"])
+        else:
+            _stats["fuse_false"] += 1
+            if warmup_rec.get("tokens_out"):
+                _stats["tokens_out_full"].append(warmup_rec["tokens_out"])
+        _stats["recent"].append(warmup_rec)
+
     t_start = time.time()
     progress = Progress(
         SpinnerColumn(),
@@ -423,7 +461,7 @@ def main():
         TimeRemainingColumn(),
         refresh_per_second=2,
     )
-    task_id = progress.add_task("打分中", total=len(todo))
+    task_id = progress.add_task("打分中", total=len(todo))  # todo 已去掉 warmup 篇
 
     with Live(make_dashboard(progress, total, t_start),
               console=console, refresh_per_second=2) as live:
