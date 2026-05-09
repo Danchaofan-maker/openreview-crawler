@@ -187,7 +187,8 @@ def build_user_message(paper: dict) -> str:
 
 def call_api(system: str, user: str, model: str, api_key: str,
              controller: AdaptiveSemaphore,
-             retry_max: int = 4, base_delay: float = 2.0) -> dict:
+             retry_max: int = 8, base_delay: float = 5.0) -> dict:
+    """retry_max=8, base_delay=5 应对家庭网络偶发断联（最长单次等待 ~5×2^6=320s）"""
     payload = {
         "model": model,
         "messages": [
@@ -214,14 +215,16 @@ def call_api(system: str, user: str, model: str, api_key: str,
             r.raise_for_status()
             controller.on_success()
             return r.json()
-        except requests.Timeout:
-            delay = base_delay * (2 ** attempt)
-            logging.warning("Timeout attempt %d, retry after %.0fs", attempt + 1, delay)
+        except (requests.Timeout, requests.ConnectionError) as e:
+            # Timeout = 服务器慢；ConnectionError = 本地网络断联
+            delay = min(base_delay * (2 ** attempt), 300)   # 最多等 5 分钟
+            logging.warning("%s attempt %d, retry after %.0fs",
+                            type(e).__name__, attempt + 1, delay)
             if attempt < retry_max - 1:
                 time.sleep(delay)
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code >= 500:
-                delay = base_delay * (2 ** attempt)
+                delay = min(base_delay * (2 ** attempt), 300)
                 logging.warning("HTTP %d attempt %d, retry after %.0fs",
                                 e.response.status_code, attempt + 1, delay)
                 if attempt < retry_max - 1:
