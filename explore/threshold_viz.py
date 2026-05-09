@@ -21,6 +21,27 @@ def load_config():
     return None
 
 # ── 数据加载 ────────────────────────────────────────────────
+def _get_score(parsed, abbr, long_key):
+    """兼容三格式: v0.7 长名+score / v0.8 完整 abbr+s / v0.8 紧凑 abbr=数字"""
+    v = parsed.get(abbr)
+    if v is None: v = parsed.get(long_key)
+    if isinstance(v, dict): return v.get("s") if v.get("s") is not None else v.get("score")
+    if isinstance(v, (int, float)): return v
+    return None
+
+def _get_flag(parsed, short, long_key):
+    v = parsed.get(short)
+    if v is None: v = parsed.get(long_key)
+    if isinstance(v, bool): return v
+    if isinstance(v, dict): return v.get("f") if "f" in v else v.get("flag")
+    return None
+
+def _get_integrity(parsed):
+    if isinstance(parsed.get("ig"), str): return parsed["ig"]
+    lc = parsed.get("lc") or parsed.get("logical_chain")
+    if isinstance(lc, dict): return lc.get("ig") or lc.get("integrity")
+    return None
+
 @st.cache_data
 def load_data():
     lines = pathlib.Path("data/llm_v4pro_thinking_N600_seed42.jsonl").read_text().strip().split("\n")
@@ -30,16 +51,12 @@ def load_data():
         parsed = r.get("parsed") or {}
         if not isinstance(parsed, dict):
             continue
-        row = {"paper_id": r.get("paper_id"), "title": r.get("title", "")}
+        row = {"paper_id": r.get("paper_id"), "title": r.get("title", ""), "fuse": parsed.get("fuse")}
         for abbr, key in SCORE_FIELDS.items():
-            val = parsed.get(key, {})
-            row[abbr] = val.get("score") if isinstance(val, dict) else None
-        mk = parsed.get("marketing_detected", {})
-        row["marketing"] = mk.get("flag") if isinstance(mk, dict) else None
-        hr = parsed.get("human_review_required", {})
-        row["human_review"] = hr.get("flag") if isinstance(hr, dict) else None
-        lc = parsed.get("logical_chain", {})
-        row["integrity"] = lc.get("integrity") if isinstance(lc, dict) else None
+            row[abbr] = _get_score(parsed, abbr, key)
+        row["marketing"]    = _get_flag(parsed, "mk", "marketing_detected")
+        row["human_review"] = _get_flag(parsed, "hr", "human_review_required")
+        row["integrity"]    = _get_integrity(parsed)
         records.append(row)
     return pd.DataFrame(records)
 
