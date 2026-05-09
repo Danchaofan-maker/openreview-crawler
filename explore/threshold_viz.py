@@ -6,6 +6,20 @@ import numpy as np
 
 st.set_page_config(page_title="论文熔断规则配置", layout="wide")
 
+CONFIG_PATH = pathlib.Path("explore/rules.json")
+
+def save_config():
+    CONFIG_PATH.write_text(json.dumps({
+        "rules": st.session_state.rules,
+        "inter_logic": st.session_state.inter_logic,
+        "force_keep_hr": st.session_state.force_keep_hr,
+    }, ensure_ascii=False, indent=2))
+
+def load_config():
+    if CONFIG_PATH.exists():
+        return json.loads(CONFIG_PATH.read_text())
+    return None
+
 # ── 数据加载 ────────────────────────────────────────────────
 @st.cache_data
 def load_data():
@@ -59,21 +73,25 @@ def new_rule():
     }
 
 if "rules" not in st.session_state:
-    st.session_state.rules = [
-        {"id": str(uuid.uuid4()), "name": "数学严谨度极低", "enabled": True, "negate": False,
-         "internal_logic": "AND", "conditions": [{"id": str(uuid.uuid4()), "field": "mr", "op": "lt", "value": 2.0}]},
-        {"id": str(uuid.uuid4()), "name": "纯benchmark", "enabled": True, "negate": False,
-         "internal_logic": "AND", "conditions": [
-             {"id": str(uuid.uuid4()), "field": "er", "op": "gt", "value": 7.5},
-             {"id": str(uuid.uuid4()), "field": "mr", "op": "lt", "value": 3.0},
-         ]},
-        {"id": str(uuid.uuid4()), "name": "逻辑链缺失", "enabled": True, "negate": False,
-         "internal_logic": "AND", "conditions": [{"id": str(uuid.uuid4()), "field": "integrity", "op": "in", "value": ["absent", "broken"]}]},
-    ]
-if "inter_logic" not in st.session_state:
-    st.session_state.inter_logic = "OR"
-if "force_keep_hr" not in st.session_state:
-    st.session_state.force_keep_hr = True
+    saved = load_config()
+    if saved:
+        st.session_state.rules       = saved["rules"]
+        st.session_state.inter_logic = saved.get("inter_logic", "OR")
+        st.session_state.force_keep_hr = saved.get("force_keep_hr", True)
+    else:
+        st.session_state.rules = [
+            {"id": str(uuid.uuid4()), "name": "数学严谨度极低", "enabled": True, "negate": False,
+             "internal_logic": "AND", "conditions": [{"id": str(uuid.uuid4()), "field": "mr", "op": "lt", "value": 2.0}]},
+            {"id": str(uuid.uuid4()), "name": "纯benchmark", "enabled": True, "negate": False,
+             "internal_logic": "AND", "conditions": [
+                 {"id": str(uuid.uuid4()), "field": "er", "op": "gt", "value": 7.5},
+                 {"id": str(uuid.uuid4()), "field": "mr", "op": "lt", "value": 3.0},
+             ]},
+            {"id": str(uuid.uuid4()), "name": "逻辑链缺失", "enabled": True, "negate": False,
+             "internal_logic": "AND", "conditions": [{"id": str(uuid.uuid4()), "field": "integrity", "op": "in", "value": ["absent", "broken"]}]},
+        ]
+        st.session_state.inter_logic   = "OR"
+        st.session_state.force_keep_hr = True
 
 # ── 条件求值 ─────────────────────────────────────────────────
 def eval_cond(df, cond):
@@ -185,8 +203,28 @@ for ri in sorted(rules_to_delete, reverse=True):
 if rules_to_delete:
     st.rerun()
 
-if st.button("＋ 新增规则"):
+btn1, btn2, btn3, btn4 = st.columns([1, 1, 1, 4])
+if btn1.button("＋ 新增规则"):
     st.session_state.rules.append(new_rule())
+    st.rerun()
+if btn2.button("💾 保存配置"):
+    save_config()
+    st.success("已保存到 explore/rules.json")
+
+config_json = json.dumps({
+    "rules": st.session_state.rules,
+    "inter_logic": st.session_state.inter_logic,
+    "force_keep_hr": st.session_state.force_keep_hr,
+}, ensure_ascii=False, indent=2)
+btn3.download_button("📤 导出", config_json, "rules.json", "application/json")
+
+uploaded = st.file_uploader("📥 导入规则配置", type="json", label_visibility="collapsed")
+if uploaded:
+    imported = json.loads(uploaded.read())
+    st.session_state.rules         = imported["rules"]
+    st.session_state.inter_logic   = imported.get("inter_logic", "OR")
+    st.session_state.force_keep_hr = imported.get("force_keep_hr", True)
+    save_config()
     st.rerun()
 
 # ── 结果计算 ─────────────────────────────────────────────────
