@@ -3,7 +3,8 @@
 
 特性:
   - 全量 / 指定 N 篇，自动续跑（跳过已完成 paper_id）
-  - ThreadPoolExecutor 并发，可配置 workers
+  - AIMD 动态并发：成功+2，429 减半，冷却防抖
+  - Warmup 探针：先发一篇验证全链路，再开并发
   - 指数退避重试（应对 429 / 5xx / 网络抖动）
   - Rich 实时仪表盘（适配 tmux，每秒刷新）
   - SIGINT / SIGTERM 优雅退出，已完成数据不丢
@@ -11,8 +12,10 @@
   - 运行结束按原始顺序重排输出
 
 用法:
-  python run_c3_full.py                        # 全量，默认 workers=32
-  python run_c3_full.py --n 200 --workers 16   # 前 200 篇，16 并发
+  python run_c3_full.py                           # 全量，自动调速
+  python run_c3_full.py --n 200                   # 前 200 篇
+  python run_c3_full.py --init-workers 32         # 初始并发（默认 16）
+  python run_c3_full.py --max-workers 256         # 并发上限（默认 256）
   python run_c3_full.py --model deepseek-v4-pro
 
 必要文件（与本脚本同目录）:
@@ -46,7 +49,6 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TimeElapsedColumn, TimeRemainingColumn
 from rich.table import Table
-from rich.text import Text
 
 # ─── 路径 ────────────────────────────────────────────────────────────────────
 ROOT        = Path(__file__).resolve().parent
@@ -58,7 +60,6 @@ API_URL     = "https://api.deepseek.com/v1/chat/completions"
 
 # ─── C3 schema ───────────────────────────────────────────────────────────────
 SCORE_FIELDS = ("mr", "tn", "md", "ar", "er", "tea", "cc", "ei", "sg", "cs")
-DIM_NAMES    = {1: "mr", 2: "tn", 3: "md", 4: "ar", 5: "er"}
 
 # ─── 全局状态 ─────────────────────────────────────────────────────────────────
 _write_lock    = threading.Lock()
@@ -69,9 +70,80 @@ _stats = {
     "ok": 0, "fail": 0,
     "fuse_true": 0, "fuse_false": 0,
     "tokens_out_compact": [], "tokens_out_full": [],
-    "recent": [],          # 最近完成的记录（最多 10 条）
-    "errors": [],          # 最近失败（最多 5 条）
+    "recent": [],
+    "errors": [],
+    "concurrency_history": [],   # [(timestamp, limit), ...]
 }
+
+
+# ─── AIMD 动态并发控制器 ──────────────────────────────────────────────────────
+
+class AdaptiveSemaphore:
+    """加性增、乘性减（AIMD）并发控制。
+
+    - 每 `increase_after` 次成功 → limit += `increase_step`
+    - 每次 429 → limit = max(min_w, limit // 2)，冷却 `decrease_cooldown` 秒
+    - 内部用 Condition 让超出 limit 的线程等待
+    """
+
+    def __init__(self, initial: int, min_w: int, max_w: int,
+                 increase_after: int = 10, increase_step: int = 2,
+                 decrease_cooldown: float = 3.0):
+        self._cv              = threading.Condition(threading.Lock())
+        self._limit           = initial
+        self._active          = 0
+        self._min             = min_w
+        self._max             = max_w
+        self._increase_after  = increase_after
+        self._increase_step   = increase_step
+        self._cooldown        = decrease_cooldown
+        self._success_streak  = 0
+        self._last_decrease   = 0.0
+
+    def acquire(self):
+        with self._cv:
+            while self._active >= self._limit:
+                self._cv.wait(timeout=0.5)
+            self._active += 1
+
+    def release(self):
+        with self._cv:
+            self._active -= 1
+            self._cv.notify_all()
+
+    def on_success(self):
+        with self._cv:
+            self._success_streak += 1
+            if self._success_streak >= self._increase_after:
+                self._success_streak = 0
+                if self._limit < self._max:
+                    self._limit = min(self._max, self._limit + self._increase_step)
+                    self._cv.notify_all()
+                    self._record()
+
+    def on_rate_limited(self):
+        with self._cv:
+            now = time.time()
+            if now - self._last_decrease < self._cooldown:
+                return
+            self._last_decrease   = now
+            self._success_streak  = 0
+            new_limit = max(self._min, self._limit // 2)
+            if new_limit != self._limit:
+                self._limit = new_limit
+                self._record()
+
+    def _record(self):
+        with _stats_lock:
+            _stats["concurrency_history"].append((time.time(), self._limit))
+
+    @property
+    def limit(self) -> int:
+        return self._limit
+
+    @property
+    def active(self) -> int:
+        return self._active
 
 
 # ─── 工具函数 ─────────────────────────────────────────────────────────────────
@@ -108,6 +180,7 @@ def build_user_message(paper: dict) -> str:
 
 
 def call_api(system: str, user: str, model: str, api_key: str,
+             controller: AdaptiveSemaphore,
              retry_max: int = 4, base_delay: float = 2.0) -> dict:
     payload = {
         "model": model,
@@ -126,11 +199,14 @@ def call_api(system: str, user: str, model: str, api_key: str,
         try:
             r = requests.post(API_URL, headers=headers, json=payload, timeout=120)
             if r.status_code == 429:
+                controller.on_rate_limited()
                 delay = base_delay * (3 ** attempt)
-                logging.warning("429 rate-limited, retry %d after %.0fs", attempt + 1, delay)
+                logging.warning("429 rate-limited, retry %d after %.0fs (limit→%d)",
+                                attempt + 1, delay, controller.limit)
                 time.sleep(delay)
                 continue
             r.raise_for_status()
+            controller.on_success()
             return r.json()
         except requests.Timeout:
             delay = base_delay * (2 ** attempt)
@@ -146,6 +222,7 @@ def call_api(system: str, user: str, model: str, api_key: str,
                     time.sleep(delay)
                     continue
             raise
+
     raise RuntimeError(f"API failed after {retry_max} attempts")
 
 
@@ -161,7 +238,6 @@ def parse_content(content: str) -> dict:
 
 def validate_c3(parsed: dict) -> tuple[bool, list[str]]:
     errors = []
-
     if parsed.get("pv") != "v0.8":
         errors.append(f"pv={parsed.get('pv')!r} != v0.8")
 
@@ -171,10 +247,8 @@ def validate_c3(parsed: dict) -> tuple[bool, list[str]]:
 
     if ig not in ("intact", "partial", "broken", "absent"):
         errors.append(f"ig={ig!r} 无效")
-
     if ig == "absent" and fuse is not True:
         errors.append(f"ig=absent 但 fuse={fuse}")
-
     if not isinstance(fuse, bool):
         errors.append(f"fuse={fuse!r} 不是 bool")
 
@@ -184,21 +258,17 @@ def validate_c3(parsed: dict) -> tuple[bool, list[str]]:
         valid = sorted({x for x in rr if isinstance(x, int) and 1 <= x <= 5})
         if len(valid) >= 2:
             parsed["rr"] = valid[:2]
-        elif len(rr) == 0:
+        elif not rr:
             parsed["rr"] = []
         else:
             scores = {i: parsed.get(k) for i, k in enumerate(["mr","tn","md","ar","er"], 1)}
-            valid_scores = {i: v for i, v in scores.items() if isinstance(v, (int, float))}
-            if len(valid_scores) >= 2:
-                parsed["rr"] = sorted(sorted(valid_scores, key=valid_scores.__getitem__)[:2])
-            else:
-                parsed["rr"] = []
+            valid_s = {i: v for i, v in scores.items() if isinstance(v, (int, float))}
+            parsed["rr"] = sorted(sorted(valid_s, key=valid_s.__getitem__)[:2]) if len(valid_s) >= 2 else []
 
     if fuse is True:
         extra = [k for k in parsed if k.endswith("_r") or k in ("lc_p","lc_t","lc_d","lc_c","osn")]
         if extra:
             errors.append(f"fuse=true 但存在 rationale 字段: {extra[:3]}")
-
     if fuse is False:
         required = ["mr_r","tn_r","md_r","ar_r","er_r","cc_r","ei_r","sg_r","cs_r",
                     "lc_p","lc_t","lc_d","lc_c","mk_r","hr_r","osn"]
@@ -219,14 +289,20 @@ def verify_fuse(parsed: dict) -> tuple[bool, str]:
 
 # ─── 单篇处理 ────────────────────────────────────────────────────────────────
 
-def process_one(paper: dict, system: str, model: str, api_key: str, order_idx: int) -> dict:
-    pid = paper["paper_id"]
-    record: dict = {"_order_idx": order_idx, "paper_id": pid,
-                    "title": paper.get("title",""), "venue": paper.get("venue"),
-                    "year": paper.get("year")}
+def process_one(paper: dict, system: str, model: str, api_key: str,
+                order_idx: int, controller: AdaptiveSemaphore | None = None) -> dict:
+    pid    = paper["paper_id"]
+    record = {"_order_idx": order_idx, "paper_id": pid,
+              "title": paper.get("title",""), "venue": paper.get("venue"),
+              "year": paper.get("year")}
     t0 = time.time()
+
+    if controller:
+        controller.acquire()
+
     try:
-        resp    = call_api(system, build_user_message(paper), model, api_key)
+        resp    = call_api(system, build_user_message(paper), model, api_key,
+                           controller or AdaptiveSemaphore(1, 1, 1))
         msg     = resp["choices"][0]["message"]
         usage   = resp.get("usage", {})
         elapsed = time.time() - t0
@@ -241,7 +317,7 @@ def process_one(paper: dict, system: str, model: str, api_key: str, order_idx: i
                    else (None if fuse_ok else fuse_msg))
         except Exception as e:
             parsed = None; schema_ok = fuse_ok = ok = False
-            schema_errs = []; err = f"JSON parse failed: {e}"
+            err = f"JSON parse failed: {e}"
 
         record.update({
             "elapsed_s": round(elapsed, 1),
@@ -256,6 +332,9 @@ def process_one(paper: dict, system: str, model: str, api_key: str, order_idx: i
             "ok": False, "schema_ok": False, "fuse_ok": False,
             "elapsed_s": round(time.time() - t0, 1), "error": repr(e),
         })
+    finally:
+        if controller:
+            controller.release()
 
     return record
 
@@ -297,47 +376,60 @@ def sort_output():
 
 # ─── Rich 仪表盘 ──────────────────────────────────────────────────────────────
 
-def make_dashboard(progress: Progress, total: int, t_start: float) -> Table:
+def make_dashboard(progress: Progress, total: int, controller: AdaptiveSemaphore) -> Panel:
     with _stats_lock:
-        ok        = _stats["ok"]
-        fail      = _stats["fail"]
-        ft        = _stats["fuse_true"]
-        ff        = _stats["fuse_false"]
-        tok_c     = _stats["tokens_out_compact"]
-        tok_f     = _stats["tokens_out_full"]
-        recent    = list(_stats["recent"])
-        errors    = list(_stats["errors"])
+        ok     = _stats["ok"]
+        fail   = _stats["fail"]
+        ft     = _stats["fuse_true"]
+        tok_c  = _stats["tokens_out_compact"]
+        tok_f  = _stats["tokens_out_full"]
+        recent = list(_stats["recent"])
+        errors = list(_stats["errors"])
+        hist   = list(_stats["concurrency_history"])
 
     done     = ok + fail
     fuse_pct = f"{ft/(ok or 1)*100:.1f}%" if ok else "-"
     avg_c    = f"{int(statistics.mean(tok_c))}" if tok_c else "-"
     avg_f    = f"{int(statistics.mean(tok_f))}" if tok_f else "-"
+    cur_lim  = controller.limit
+    cur_act  = controller.active
+
+    # 并发趋势箭头（比较最近两次变化）
+    if len(hist) >= 2:
+        trend = "↑" if hist[-1][1] > hist[-2][1] else "↓"
+    else:
+        trend = "→"
 
     # ── 统计行 ──
     stat = Table.grid(padding=(0, 2))
-    stat.add_column(style="bold cyan")
-    stat.add_column(style="green")
-    stat.add_column(style="bold cyan")
-    stat.add_column(style="yellow")
-    stat.add_column(style="bold cyan")
-    stat.add_column()
-    stat.add_column(style="bold cyan")
-    stat.add_column()
-    stat.add_column(style="bold cyan")
-    stat.add_column()
+    for _ in range(10):
+        stat.add_column()
     stat.add_row(
-        "OK", str(ok),
-        "FAIL", str(fail),
-        "FUSE%", fuse_pct,
-        "TOK紧凑", avg_c,
-        "TOK完整", avg_f,
+        "[bold cyan]OK[/bold cyan]",     f"[green]{ok}[/green]",
+        "[bold cyan]FAIL[/bold cyan]",   f"[red]{fail}[/red]",
+        "[bold cyan]FUSE%[/bold cyan]",  fuse_pct,
+        "[bold cyan]TOK紧凑[/bold cyan]", avg_c,
+        "[bold cyan]TOK完整[/bold cyan]", avg_f,
+    )
+
+    # ── 并发状态行 ──
+    conc = Table.grid(padding=(0, 2))
+    for _ in range(6):
+        conc.add_column()
+    conc.add_row(
+        "[bold cyan]并发 active/limit[/bold cyan]",
+        f"[bold yellow]{cur_act}[/bold yellow]/[bold]{cur_lim}[/bold]  {trend}",
+        "[bold cyan]min→max[/bold cyan]",
+        f"{controller._min}→{controller._max}",
+        "[bold cyan]调速次数[/bold cyan]",
+        str(len(hist)),
     )
 
     # ── 最近完成 ──
     rec_table = Table(title="最近完成", box=None, header_style="bold magenta",
                       show_edge=False, padding=(0,1))
-    for col, style in [("paper_id",""), ("ig","cyan"), ("fuse",""),
-                       ("mr",""), ("tn",""), ("cs",""), ("s","dim")]:
+    for col, style in [("paper_id",""),("ig","cyan"),("fuse",""),
+                       ("mr",""),("tn",""),("cs",""),("s","dim")]:
         rec_table.add_column(col, style=style, no_wrap=True)
     for r in recent[-8:]:
         p = r.get("parsed") or {}
@@ -345,13 +437,11 @@ def make_dashboard(progress: Progress, total: int, t_start: float) -> Table:
             r["paper_id"][:12],
             p.get("ig","")[:3],
             "T" if p.get("fuse") else "F",
-            str(p.get("mr","-")),
-            str(p.get("tn","-")),
-            str(p.get("cs","-")),
+            str(p.get("mr","-")), str(p.get("tn","-")), str(p.get("cs","-")),
             f"{r.get('elapsed_s',0):.1f}s",
         )
 
-    # ── 最近失败 ──
+    # ── 近期失败 ──
     err_table = Table(title="近期失败", box=None, header_style="bold red",
                       show_edge=False, padding=(0,1))
     err_table.add_column("paper_id"); err_table.add_column("error", no_wrap=False)
@@ -361,8 +451,10 @@ def make_dashboard(progress: Progress, total: int, t_start: float) -> Table:
     outer = Table.grid(padding=1)
     outer.add_row(progress)
     outer.add_row(stat)
+    outer.add_row(conc)
     outer.add_row(Columns([rec_table, err_table]))
-    return Panel(outer, title=f"[bold]C3 v0.8 全量打分[/bold]  完成 {done}/{total}",
+    return Panel(outer,
+                 title=f"[bold]C3 v0.8 全量打分[/bold]  完成 {done}/{total}",
                  border_style="blue")
 
 
@@ -370,10 +462,12 @@ def make_dashboard(progress: Progress, total: int, t_start: float) -> Table:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n",       type=int,   default=None,           help="处理前 N 篇（默认全量）")
-    parser.add_argument("--workers", type=int,   default=128,            help="并发线程数")
-    parser.add_argument("--model",   type=str,   default="deepseek-v4-pro")
-    parser.add_argument("--input",   type=str,   default=str(INPUT_PATH))
+    parser.add_argument("--n",            type=int, default=None)
+    parser.add_argument("--init-workers", type=int, default=16,  help="初始并发数")
+    parser.add_argument("--max-workers",  type=int, default=256, help="并发上限")
+    parser.add_argument("--min-workers",  type=int, default=4,   help="并发下限")
+    parser.add_argument("--model",        type=str, default="deepseek-v4-pro")
+    parser.add_argument("--input",        type=str, default=str(INPUT_PATH))
     args = parser.parse_args()
 
     load_env()
@@ -396,8 +490,11 @@ def main():
     pid_to_order = {p["paper_id"]: i for i, p in enumerate(samples)}
 
     console = Console()
-    console.print(f"[bold]C3 v0.8[/bold]  模型: {args.model}  并发: {args.workers}  "
-                  f"prompt: {len(system)} chars")
+    console.print(
+        f"[bold]C3 v0.8[/bold]  模型: {args.model}  "
+        f"并发: {args.init_workers}→{args.max_workers}(AIMD)  "
+        f"prompt: {len(system)} chars"
+    )
     console.print(f"总计: {total}  已完成: {len(completed)}  待处理: {len(todo)}")
 
     if not todo:
@@ -407,20 +504,22 @@ def main():
 
     # ── 信号处理 ──
     def _on_signal(sig, frame):
-        console.print("\n[yellow]收到退出信号，等待当前任务完成后退出...[/yellow]")
+        console.print("\n[yellow]收到退出信号，等待当前请求完成后退出...[/yellow]")
         _shutdown_flag.set()
     signal.signal(signal.SIGINT,  _on_signal)
     signal.signal(signal.SIGTERM, _on_signal)
 
     # ── Warmup：先跑第一篇，验证全链路 ──
     console.print("\n[bold yellow]▶ Warmup[/bold yellow] 发送第一篇验证管道...")
+    warmup_ctrl  = AdaptiveSemaphore(1, 1, 1)   # 单并发，仅用于接口一致
     warmup_paper = todo[0]
     warmup_rec   = process_one(warmup_paper, system, args.model, api_key,
-                               pid_to_order[warmup_paper["paper_id"]])
+                               pid_to_order[warmup_paper["paper_id"]],
+                               controller=None)   # warmup 不过 semaphore
     append_jsonl(warmup_rec)
 
     if not warmup_rec.get("ok"):
-        console.print(f"[bold red]✗ Warmup 失败，终止。[/bold red]")
+        console.print("[bold red]✗ Warmup 失败，终止。[/bold red]")
         console.print(f"  paper_id : {warmup_rec['paper_id']}")
         console.print(f"  error    : {warmup_rec.get('error','')}")
         sys.exit(1)
@@ -428,15 +527,12 @@ def main():
     wp = warmup_rec.get("parsed", {})
     console.print(
         f"[bold green]✓ Warmup 通过[/bold green]  "
-        f"ig=[cyan]{wp.get('ig','')}[/cyan]  "
-        f"fuse=[cyan]{wp.get('fuse')}[/cyan]  "
+        f"ig=[cyan]{wp.get('ig','')}[/cyan]  fuse=[cyan]{wp.get('fuse')}[/cyan]  "
         f"mr={wp.get('mr','-')}  tn={wp.get('tn','-')}  "
-        f"tok_out={warmup_rec.get('tokens_out','-')}  "
-        f"elapsed={warmup_rec.get('elapsed_s','-')}s"
+        f"tok_out={warmup_rec.get('tokens_out','-')}  {warmup_rec.get('elapsed_s','-')}s"
     )
-    console.print(f"[dim]管道验证通过，启动 {args.workers} 并发...[/dim]\n")
+    console.print(f"[dim]启动 AIMD 并发（初始={args.init_workers}，上限={args.max_workers}）...[/dim]\n")
 
-    # warmup 篇已完成，从剩余列表继续
     todo = todo[1:]
     with _stats_lock:
         _stats["ok"] += 1
@@ -450,6 +546,20 @@ def main():
                 _stats["tokens_out_full"].append(warmup_rec["tokens_out"])
         _stats["recent"].append(warmup_rec)
 
+    if not todo:
+        print_summary(console, total)
+        return
+
+    # ── AIMD 控制器 ──
+    controller = AdaptiveSemaphore(
+        initial       = args.init_workers,
+        min_w         = args.min_workers,
+        max_w         = args.max_workers,
+        increase_after = 10,
+        increase_step  = 2,
+        decrease_cooldown = 3.0,
+    )
+
     t_start = time.time()
     progress = Progress(
         SpinnerColumn(),
@@ -461,18 +571,18 @@ def main():
         TimeRemainingColumn(),
         refresh_per_second=2,
     )
-    task_id = progress.add_task("打分中", total=len(todo))  # todo 已去掉 warmup 篇
+    task_id = progress.add_task("打分中", total=len(todo))
 
-    with Live(make_dashboard(progress, total, t_start),
+    # 线程池大小 = 上限，让 AIMD semaphore 控制实际并发
+    pool_size = args.max_workers
+
+    with Live(make_dashboard(progress, total, controller),
               console=console, refresh_per_second=2) as live:
 
-        def update_live():
-            live.update(make_dashboard(progress, total, t_start))
-
-        with ThreadPoolExecutor(max_workers=args.workers) as ex:
+        with ThreadPoolExecutor(max_workers=pool_size) as ex:
             futures = {
                 ex.submit(process_one, p, system, args.model, api_key,
-                          pid_to_order[p["paper_id"]]): p
+                          pid_to_order[p["paper_id"]], controller): p
                 for p in todo
             }
             for fut in as_completed(futures):
@@ -507,25 +617,28 @@ def main():
                         if len(_stats["errors"]) > 10:
                             _stats["errors"].pop(0)
 
-                update_live()
+                live.update(make_dashboard(progress, total, controller))
 
     elapsed = time.time() - t_start
-    console.print(f"\n[bold]完成[/bold]  ok={_stats['ok']}  fail={_stats['fail']}  "
-                  f"耗时 {elapsed/60:.1f}min")
-
+    console.print(
+        f"\n[bold]完成[/bold]  ok={_stats['ok']}  fail={_stats['fail']}  "
+        f"耗时 {elapsed/60:.1f}min  "
+        f"并发调速 {len(_stats['concurrency_history'])} 次"
+    )
     console.print("排序输出...", end=" ")
     sort_output()
     console.print("done")
-
     print_summary(console, total)
     console.print(f"\n→ {OUTPUT_PATH}")
-    logging.info("完成 ok=%d fail=%d elapsed=%.0fs", _stats["ok"], _stats["fail"], elapsed)
+    logging.info("完成 ok=%d fail=%d elapsed=%.0fs adjustments=%d",
+                 _stats["ok"], _stats["fail"], elapsed,
+                 len(_stats["concurrency_history"]))
 
 
 def print_summary(console: Console, total: int):
     if not OUTPUT_PATH.exists():
         return
-    recs    = []
+    recs = []
     with open(OUTPUT_PATH, encoding="utf-8") as f:
         for line in f:
             try: recs.append(json.loads(line))
@@ -544,21 +657,19 @@ def print_summary(console: Console, total: int):
     t.add_column("指标"); t.add_column("值", justify="right")
     t.add_row("fuse=true  (紧凑)", f"{ft} ({ft/n*100:.1f}%)")
     t.add_row("fuse=false (完整)", f"{ff} ({ff/n*100:.1f}%)")
-
     tok_c = [r["tokens_out"] for r in ok_recs if r.get("parsed",{}).get("fuse") is True  and r.get("tokens_out")]
     tok_f = [r["tokens_out"] for r in ok_recs if r.get("parsed",{}).get("fuse") is False and r.get("tokens_out")]
     if tok_c: t.add_row("output tokens 紧凑均值", str(int(statistics.mean(tok_c))))
     if tok_f: t.add_row("output tokens 完整均值", str(int(statistics.mean(tok_f))))
-
     console.print(t)
 
-    score_t = Table(title="分数分布", box=None, header_style="bold")
-    score_t.add_column("维度"); score_t.add_column("均值", justify="right"); score_t.add_column("n", justify="right")
+    st = Table(title="分数分布", box=None, header_style="bold")
+    st.add_column("维度"); st.add_column("均值", justify="right"); st.add_column("n", justify="right")
     for field in ("mr","tn","md","ar","er","cs"):
         vals = [r["parsed"][field] for r in ok_recs if r.get("parsed") and r["parsed"].get(field) is not None]
         if vals:
-            score_t.add_row(field, f"{statistics.mean(vals):.2f}", str(len(vals)))
-    console.print(score_t)
+            st.add_row(field, f"{statistics.mean(vals):.2f}", str(len(vals)))
+    console.print(st)
 
 
 if __name__ == "__main__":
