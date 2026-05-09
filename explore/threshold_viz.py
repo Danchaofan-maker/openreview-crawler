@@ -58,6 +58,7 @@ FIELDS = {
     "cc":  "compute_complexity",
     "ei":  "epistemological_intent",
     "sg":  "scope_generality",
+    "cs":  "confidence_score",
 }
 
 st.sidebar.header("数值阈值（低于此值→丢弃）")
@@ -109,7 +110,7 @@ col4.metric("marketing=True", f"{n_marketing} 篇", f"{n_marketing/len(df):.1%}"
 col5.metric("human_review=True", f"{n_human_review} 篇", f"{n_human_review/len(df):.1%}")
 
 # 分布图
-fig, axes = plt.subplots(3, 3, figsize=(13, 9))
+fig, axes = plt.subplots(2, 5, figsize=(18, 7))
 axes = axes.flatten()
 
 for i, (abbr, name) in enumerate(FIELDS.items()):
