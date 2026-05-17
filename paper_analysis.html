@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>论文分析报告</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f0f2f5;font-family:'Segoe UI',sans-serif;color:#2c3e50;padding:24px}
+h1{text-align:center;font-size:28px;font-weight:700;margin-bottom:8px;color:#1a252f}
+.subtitle{text-align:center;color:#7f8c8d;margin-bottom:24px;font-size:14px}
+
+/* ── simple filter bar ── */
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
+.filter-bar select,.filter-bar input{padding:7px 13px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff;outline:none}
+.filter-bar select:focus,.filter-bar input:focus{border-color:#3498db}
+.filter-row2{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;align-items:center}
+.filter-row2 label{font-size:13px;color:#636e72;display:flex;align-items:center;gap:6px}
+.filter-row2 input[type=number]{width:70px;padding:5px 9px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff}
+
+/* ── rules panel ── */
+.rules-panel{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:20px;overflow:hidden}
+.rules-header{display:flex;align-items:center;gap:10px;padding:12px 18px;cursor:pointer;user-select:none;border-bottom:1px solid #f0f2f5}
+.rules-header:hover{background:#fafbfc}
+.rules-header-title{font-size:14px;font-weight:700;color:#2c3e50}
+.rules-header-badge{background:#3498db;color:#fff;border-radius:12px;padding:2px 9px;font-size:12px;font-weight:700}
+.rules-header-badge.inactive{background:#bdc3c7}
+.rules-header-chevron{margin-left:auto;font-size:12px;color:#95a5a6;transition:transform .2s}
+.rules-header-chevron.open{transform:rotate(180deg)}
+.rules-body{padding:16px 18px;display:none}
+.rules-body.open{display:block}
+
+.rules-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #f0f2f5}
+.rules-toolbar select{padding:6px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px;background:#fff}
+.rules-toolbar label{font-size:13px;color:#555;display:flex;align-items:center;gap:5px}
+.btn{padding:6px 14px;border-radius:7px;border:1px solid #ddd;background:#fff;font-size:13px;cursor:pointer;font-weight:600;color:#2c3e50}
+.btn:hover{background:#f0f2f5}
+.btn-primary{background:#3498db;color:#fff;border-color:#3498db}
+.btn-primary:hover{background:#2980b9;border-color:#2980b9}
+.btn-danger{color:#e74c3c;border-color:#e74c3c}
+.btn-danger:hover{background:#fde8e8}
+.btn-sm{padding:3px 10px;font-size:12px}
+.btn-ghost{border:none;background:none;color:#95a5a6;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px}
+.btn-ghost:hover{background:#f0f2f5;color:#2c3e50}
+
+.rule-item{border:1px solid #e8eaed;border-radius:10px;margin-bottom:10px;overflow:hidden}
+.rule-item.disabled{opacity:.55}
+.rule-header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f8f9fa;border-bottom:1px solid #e8eaed}
+.rule-name-input{flex:1;border:none;background:transparent;font-size:13px;font-weight:700;color:#2c3e50;outline:none;min-width:0}
+.rule-logic-sel{padding:3px 7px;border:1px solid #ddd;border-radius:6px;font-size:12px;background:#fff}
+.rule-negate-lbl{font-size:12px;color:#636e72;display:flex;align-items:center;gap:3px;white-space:nowrap}
+.rule-conditions{padding:10px 14px}
+.cond-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
+.cond-sel{padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff}
+.cond-val{padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff;width:90px}
+.cond-val-enum{width:auto}
+
+.rules-footer{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid #f0f2f5}
+.mode-group{display:flex;gap:12px;align-items:center;font-size:13px;color:#555}
+.mode-group label{display:flex;align-items:center;gap:4px;cursor:pointer}
+.rules-summary{font-size:12px;color:#7f8c8d}
+
+/* ── stats / pagination ── */
+.stats-bar{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
+.stat-card{background:#fff;border-radius:10px;padding:10px 18px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.stat-card .val{font-size:22px;font-weight:700;color:#2980b9}
+.stat-card .lbl{font-size:12px;color:#7f8c8d;margin-top:2px}
+.pagination{display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:24px}
+.pagination button{padding:6px 16px;border:1px solid #ddd;border-radius:7px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#2c3e50}
+.pagination button:hover:not(:disabled){border-color:#3498db;color:#3498db}
+.pagination button:disabled{opacity:.4;cursor:default}
+.pagination span{font-size:13px;color:#7f8c8d}
+
+/* ── paper cards ── */
+.paper-card{background:#fff;border-radius:14px;box-shadow:0 3px 14px rgba(0,0,0,.08);margin-bottom:24px;overflow:hidden;transition:box-shadow .2s}
+.paper-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.13)}
+.paper-header{background:linear-gradient(135deg,#1a252f 0%,#2c3e50 100%);color:#fff;padding:18px 22px;display:flex;align-items:flex-start;gap:14px}
+.paper-idx{font-size:26px;font-weight:800;opacity:.3;min-width:40px}
+.paper-header-info{flex:1}
+.paper-title{font-size:16px;font-weight:700;line-height:1.4;margin-bottom:8px}
+.paper-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.badge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge-venue{background:rgba(255,255,255,.18);color:#ecf0f1}
+.badge-year{background:rgba(255,255,255,.12);color:#bdc3c7}
+.badge-avg{font-size:13px;padding:4px 12px}
+.paper-link{font-size:12px;color:#bdc3c7;text-decoration:none;opacity:.8}
+.paper-link:hover{opacity:1;color:#fff}
+.fav-btn{background:none;border:none;cursor:pointer;font-size:22px;line-height:1;padding:0 4px;color:#7f8c8d;transition:transform .15s,color .15s;align-self:flex-start}
+.fav-btn:hover{transform:scale(1.18)}
+.fav-btn.faved{color:#f1c40f;text-shadow:0 0 6px rgba(241,196,15,.55)}
+.paper-body{padding:20px 22px}
+.section-title{font-size:12px;font-weight:700;color:#7f8c8d;letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;border-bottom:1px solid #ecf0f1;padding-bottom:5px}
+.dims-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:20px}
+.dim-card{background:#f8f9fa;border-radius:10px;padding:12px 14px;border-left:4px solid #ddd}
+.dim-name{font-size:13px;font-weight:700;margin-bottom:7px;color:#34495e}
+.score-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.score-num{font-size:17px;font-weight:800;min-width:30px;text-align:right}
+.bar-wrap{flex:1;height:7px;background:#e8eaed;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px}
+.dim-rationale{font-size:12px;color:#636e72;line-height:1.5}
+.na-badge{display:inline-block;background:#95a5a6;color:#fff;border-radius:12px;padding:2px 9px;font-size:12px;font-weight:600}
+.lc-section{margin-bottom:20px}
+.lc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lc-card{background:#f8f9fa;border-radius:10px;padding:12px 14px}
+.lc-label{font-size:11px;font-weight:700;color:#7f8c8d;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.lc-value{font-size:13px;color:#2c3e50;line-height:1.5}
+.lc-tools{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
+.tool-tag{background:#3498db;color:#fff;border-radius:12px;padding:2px 9px;font-size:12px}
+.tool-tag-empty{color:#95a5a6;font-size:12px;font-style:italic}
+.integrity-badge{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700}
+.integrity-intact{background:#d5f5e3;color:#1e8449}
+.integrity-partial{background:#fef9e7;color:#d68910}
+.integrity-broken{background:#fde8e8;color:#c0392b}
+.integrity-absent{background:#ecf0f1;color:#7f8c8d}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:8px}
+.meta-card{background:#f8f9fa;border-radius:10px;padding:10px 13px}
+.meta-label{font-size:11px;font-weight:700;color:#95a5a6;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.meta-value{font-size:13px;color:#2c3e50;line-height:1.4}
+.flag-yes{color:#e74c3c;font-weight:700}
+.flag-no{color:#27ae60;font-weight:700}
+.rr-score{background:#e8eaed;border-radius:4px;padding:1px 6px;margin-right:3px;font-weight:700;font-size:13px}
+.loading{text-align:center;padding:60px;color:#7f8c8d;font-size:15px}
+@media(max-width:600px){.dims-grid{grid-template-columns:1fr}.lc-grid{grid-template-columns:1fr}.paper-header{flex-direction:column}.paper-idx{font-size:20px}}
+</style>
+</head>
+<body>
+<h1>论文分析报告</h1>
+<p class="subtitle" id="subtitle">加载中…</p>
+
+<!-- ── simple filters ── -->
+<div class="filter-bar">
+  <input type="text" id="searchBox" placeholder="搜索标题 / 领域…" oninput="debounceFilter()">
+  <select id="venueFilter" onchange="applyFilters()"><option value="">全部会议</option></select>
+  <select id="yearFilter" onchange="applyFilters()"><option value="">全部年份</option></select>
+  <select id="integrityFilter" onchange="applyFilters()">
+    <option value="">全部逻辑链</option>
+    <option value="intact">完整</option>
+    <option value="partial">部分完整</option>
+    <option value="broken">链接断裂</option>
+    <option value="absent">不适用</option>
+  </select>
+  <select id="sortBy" onchange="applyFilters()">
+    <option value="">默认排序</option>
+    <option value="avg_desc">均分 高→低</option>
+    <option value="avg_asc">均分 低→高</option>
+    <option value="mr_desc">严密度 高→低</option>
+    <option value="mr_asc">严密度 低→高</option>
+    <option value="er_asc">实验依赖 低→高</option>
+  </select>
+</div>
+<div class="filter-row2">
+  <label>最低严密度 mr ≥ <input type="number" id="minMr" min="0" max="10" step="0.5" placeholder="—" oninput="debounceFilter()"></label>
+  <label>最高实验依赖 er ≤ <input type="number" id="maxEr" min="0" max="10" step="0.5" placeholder="—" oninput="debounceFilter()"></label>
+  <label><input type="checkbox" id="favOnly" onchange="applyFilters()"> ⭐ 仅看收藏 (<span id="favCount">0</span>)</label>
+</div>
+
+<!-- ── rules panel ── -->
+<div class="rules-panel">
+  <div class="rules-header" onclick="toggleRulesPanel()">
+    <span class="rules-header-title">🔧 过滤规则</span>
+    <span class="rules-header-badge inactive" id="rulesBadge">未激活</span>
+    <span class="rules-header-chevron" id="rulesChevron">▾</span>
+  </div>
+  <div class="rules-body" id="rulesBody">
+
+    <!-- toolbar -->
+    <div class="rules-toolbar">
+      <select id="presetSelect"><option value="">— 选择预设 —</option></select>
+      <button class="btn" onclick="loadPreset()">加载预设</button>
+      <button class="btn btn-sm" onclick="triggerImport()" title="从本地 JSON 文件导入规则">📥 导入</button>
+      <button class="btn btn-sm" onclick="exportRules()" title="把当前规则导出为 JSON">📤 导出</button>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importRules(event)">
+      <label>规则间逻辑
+        <select id="interLogic">
+          <option value="OR">OR（任一命中即排除）</option>
+          <option value="AND">AND（全部命中才排除）</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="forceKeepHr" checked> 保留需人工复核</label>
+      <label><input type="checkbox" id="keepNa" checked> 保留 NA</label>
+      <button class="btn btn-danger btn-sm" onclick="clearAllRules()" style="margin-left:auto">清空规则</button>
+    </div>
+
+    <!-- rules list -->
+    <div id="rulesList"></div>
+
+    <button class="btn" onclick="addRule()" style="margin-bottom:14px">＋ 添加规则</button>
+
+    <!-- footer: mode + apply -->
+    <div class="rules-footer">
+      <div class="mode-group">
+        显示：
+        <label><input type="radio" name="mode" value="keep" checked> 通过规则（保留）</label>
+        <label><input type="radio" name="mode" value="reject"> 被规则命中（排除）</label>
+      </div>
+      <span class="rules-summary" id="rulesSummaryText"></span>
+      <button class="btn btn-primary" onclick="applyFilters()" style="margin-left:auto">应用规则</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── results ── -->
+<div class="stats-bar" id="statsBar"></div>
+<div class="pagination" id="paginationTop"></div>
+<div id="container"><div class="loading">加载中…</div></div>
+<div class="pagination" id="paginationBottom"></div>
+
+<script>
+// ── constants ─────────────────────────────────────────────────────────────────
+const DIM_MAP = {
+  mr:'数学推导严密度', tn:'理论新颖度', md:'数学工具深度',
+  ar:'假设现实度', er:'经验依赖度', tea:'理论-实验咬合度',
+  cc:'算力门槛', ei:'认识论意图', sg:'适用范围广度'
+};
+const AVG_DIMS = ['mr','tn','md','ar','er','cc','ei','sg'];
+const INTEGRITY_MAP = {
+  intact:  ['完整',    'integrity-intact'],
+  partial: ['部分完整','integrity-partial'],
+  broken:  ['链接断裂','integrity-broken'],
+  absent:  ['不适用',  'integrity-absent']
+};
+
+const FIELD_OPTS = [
+  {v:'mr',  l:'数学严密度 (mr)',     t:'score'},
+  {v:'tn',  l:'理论新颖度 (tn)',     t:'score'},
+  {v:'md',  l:'数学工具深度 (md)',   t:'score'},
+  {v:'ar',  l:'假设现实度 (ar)',     t:'score'},
+  {v:'er',  l:'经验依赖度 (er)',     t:'score'},
+  {v:'tea', l:'理论-实验咬合 (tea)', t:'score'},
+  {v:'cc',  l:'算力门槛 (cc)',       t:'score'},
+  {v:'ei',  l:'认识论意图 (ei)',     t:'score'},
+  {v:'sg',  l:'适用范围 (sg)',       t:'score'},
+  {v:'cs',  l:'分析置信度 (cs)',     t:'score'},
+  {v:'marketing',    l:'营销话术 (mk_f)',   t:'bool'},
+  {v:'human_review', l:'需人工复核 (hr_f)', t:'bool'},
+  {v:'integrity',    l:'逻辑链完整性 (ig)', t:'enum'},
+];
+const SCORE_OPS = [{v:'lt',l:'<'},{v:'lte',l:'≤'},{v:'gt',l:'>'},{v:'gte',l:'≥'},{v:'eq',l:'='},{v:'neq',l:'≠'}];
+const INTEGRITY_VALS = ['intact','partial','broken','absent'];
+
+// ── state ─────────────────────────────────────────────────────────────────────
+let rulesState = { rules: [] };
+let rulesPanelOpen = false;
+let state = { page: 1, per_page: 50, total: 0, loading: false };
+let _debTimer = null;
+let presets = {};
+
+// ── rule state helpers ────────────────────────────────────────────────────────
+function uid() { return Math.random().toString(36).slice(2,10); }
+
+function newRule() {
+  return { id: uid(), name: '新规则', enabled: true, negate: false,
+           internal_logic: 'AND', conditions: [newCond()] };
+}
+function newCond() {
+  return { id: uid(), field: 'mr', op: 'lte', value: 5 };
+}
+
+// ── panel open/close ──────────────────────────────────────────────────────────
+function toggleRulesPanel() {
+  rulesPanelOpen = !rulesPanelOpen;
+  document.getElementById('rulesBody').className = 'rules-body' + (rulesPanelOpen ? ' open' : '');
+  document.getElementById('rulesChevron').className = 'rules-header-chevron' + (rulesPanelOpen ? ' open' : '');
+}
+
+// ── rule CRUD ─────────────────────────────────────────────────────────────────
+function addRule() {
+  rulesState.rules.push(newRule());
+  renderRules();
+}
+function removeRule(id) {
+  rulesState.rules = rulesState.rules.filter(r => r.id !== id);
+  renderRules();
+}
+function addCondition(ruleId) {
+  const r = rulesState.rules.find(r => r.id === ruleId);
+  if (r) { r.conditions.push(newCond()); renderRules(); }
+}
+function removeCondition(ruleId, condId) {
+  const r = rulesState.rules.find(r => r.id === ruleId);
+  if (r) { r.conditions = r.conditions.filter(c => c.id !== condId); renderRules(); }
+}
+function clearAllRules() {
+  rulesState.rules = [];
+  renderRules();
+  updateRulesBadge();
+}
+
+// ── read current DOM state into rulesState ────────────────────────────────────
+function syncRulesFromDOM() {
+  rulesState.rules.forEach(rule => {
+    const el = document.querySelector(`[data-rule="${rule.id}"]`);
+    if (!el) return;
+    rule.enabled = el.querySelector('.rule-enabled').checked;
+    rule.name    = el.querySelector('.rule-name-input').value;
+    rule.internal_logic = el.querySelector('.rule-logic-sel').value;
+    rule.negate  = el.querySelector('.rule-negate-cb').checked;
+    rule.conditions.forEach(c => {
+      const ce = el.querySelector(`[data-cond="${c.id}"]`);
+      if (!ce) return;
+      c.field = ce.querySelector('.cond-field').value;
+      const opEl = ce.querySelector('.cond-op');
+      if (opEl) c.op = opEl.value;
+      // 按 DOM 实际渲染的元素读值，避免 onFieldChange 切换字段时 state/DOM 短暂失同步导致 null deref
+      const enumSel = ce.querySelector('.cond-val-enum');
+      const valEl   = ce.querySelector('.cond-val');
+      if (enumSel) {
+        c.value = Array.from(enumSel.selectedOptions).map(o => o.value);
+      } else if (valEl?.tagName === 'SELECT') {
+        c.value = valEl.value === 'true';
+      } else if (valEl) {
+        c.value = parseFloat(valEl.value) || 0;
+      }
+      // DOM 还没渲染好就跳过，保留旧 c.value
+    });
+  });
+}
+
+// ── render rules list ─────────────────────────────────────────────────────────
+function fieldOptsHtml(selected) {
+  return FIELD_OPTS.map(f => `<option value="${f.v}" ${f.v===selected?'selected':''}>${f.l}</option>`).join('');
+}
+function opOptsHtml(selected) {
+  return SCORE_OPS.map(o => `<option value="${o.v}" ${o.v===selected?'selected':''}>${o.l}</option>`).join('');
+}
+
+function condValueHtml(c) {
+  const meta = FIELD_OPTS.find(f => f.v === c.field);
+  if (!meta) return '';
+  if (meta.t === 'bool') {
+    return `<select class="cond-sel cond-val">
+      <option value="true"  ${c.value===true ?'selected':''}>true</option>
+      <option value="false" ${c.value===false?'selected':''}>false</option>
+    </select>`;
+  }
+  if (meta.t === 'enum') {
+    const selected = Array.isArray(c.value) ? c.value : [c.value];
+    return `<select class="cond-sel cond-val-enum" multiple size="2">
+      ${INTEGRITY_VALS.map(v=>`<option value="${v}" ${selected.includes(v)?'selected':''}>${v}</option>`).join('')}
+    </select>`;
+  }
+  // score — op 由 renderCond 负责渲染，这里只返回数值输入框
+  return `<input class="cond-val" type="number" min="0" max="10" step="0.5" value="${c.value ?? ''}">`;
+}
+
+function renderCond(rule, c) {
+  const meta = FIELD_OPTS.find(f => f.v === c.field) || {};
+  const isBool = meta.t === 'bool';
+  const isEnum = meta.t === 'enum';
+  return `<div class="cond-row" data-cond="${c.id}">
+    <select class="cond-sel cond-field" onchange="onFieldChange('${rule.id}','${c.id}',this.value)">
+      ${fieldOptsHtml(c.field)}
+    </select>
+    ${isBool || isEnum ? '' : `<select class="cond-sel cond-op" style="width:52px">${opOptsHtml(c.op)}</select>`}
+    ${condValueHtml(c)}
+    <button class="btn-ghost" onclick="syncRulesFromDOM();removeCondition('${rule.id}','${c.id}')" title="删除条件">✕</button>
+  </div>`;
+}
+
+function renderRule(rule) {
+  return `<div class="rule-item${rule.enabled?'':' disabled'}" data-rule="${rule.id}">
+    <div class="rule-header">
+      <input type="checkbox" class="rule-enabled" ${rule.enabled?'checked':''} onchange="syncRulesFromDOM();renderRules()">
+      <input type="text" class="rule-name-input" value="${rule.name}" placeholder="规则名称">
+      <select class="cond-sel rule-logic-sel" style="width:60px">
+        <option value="AND" ${rule.internal_logic==='AND'?'selected':''}>AND</option>
+        <option value="OR"  ${rule.internal_logic==='OR' ?'selected':''}>OR</option>
+      </select>
+      <label class="rule-negate-lbl"><input type="checkbox" class="rule-negate-cb" ${rule.negate?'checked':''}> 取反</label>
+      <button class="btn-ghost" onclick="syncRulesFromDOM();removeRule('${rule.id}')" title="删除规则">✕</button>
+    </div>
+    <div class="rule-conditions">
+      ${rule.conditions.map(c => renderCond(rule, c)).join('')}
+      <button class="btn btn-sm" onclick="syncRulesFromDOM();addCondition('${rule.id}')" style="margin-top:4px">＋ 条件</button>
+    </div>
+  </div>`;
+}
+
+function renderRules() {
+  document.getElementById('rulesList').innerHTML = rulesState.rules.map(renderRule).join('');
+  updateRulesBadge();
+}
+
+function updateRulesBadge() {
+  const n = rulesState.rules.filter(r => r.enabled).length;
+  const badge = document.getElementById('rulesBadge');
+  const mode = document.querySelector('input[name=mode]:checked')?.value || 'keep';
+  if (n === 0) {
+    badge.textContent = '未激活'; badge.className = 'rules-header-badge inactive';
+    document.getElementById('rulesSummaryText').textContent = '';
+  } else {
+    badge.textContent = `${n} 条规则 · ${mode==='keep'?'保留':'排除'}模式`;
+    badge.className = 'rules-header-badge';
+    document.getElementById('rulesSummaryText').textContent =
+      `规则间: ${document.getElementById('interLogic').value}`;
+  }
+}
+
+// ── field change → re-render that condition ───────────────────────────────────
+function onFieldChange(ruleId, condId, newField) {
+  syncRulesFromDOM();
+  const rule = rulesState.rules.find(r => r.id === ruleId);
+  const cond = rule?.conditions.find(c => c.id === condId);
+  if (!cond) return;
+  cond.field = newField;
+  const meta = FIELD_OPTS.find(f => f.v === newField) || {};
+  if (meta.t === 'bool') { cond.op = 'eq'; cond.value = true; }
+  else if (meta.t === 'enum') { cond.op = 'in'; cond.value = ['absent']; }
+  else { cond.op = 'lte'; cond.value = 5; }
+  renderRules();
+}
+
+// ── preset loading ────────────────────────────────────────────────────────────
+async function loadPresets() {
+  try {
+    const data = await fetch('/api/presets').then(r => r.json());
+    presets = data;
+    const sel = document.getElementById('presetSelect');
+    const LABELS = { jes:'Jes', danchaofan:'Danchaofan', insight_v1:'Agent v1', default:'Default' };
+    Object.keys(data).forEach(k => {
+      const o = document.createElement('option');
+      o.value = k; o.textContent = LABELS[k] || k;
+      sel.appendChild(o);
+    });
+  } catch(e) {}
+}
+
+function applyConfig(cfg) {
+  rulesState.rules = (cfg.rules || []).map(r => ({
+    id: uid(), name: r.name || '规则', enabled: r.enabled !== false,
+    negate: !!r.negate, internal_logic: r.internal_logic || 'AND',
+    conditions: (r.conditions || []).map(c => ({id: uid(), field: c.field, op: c.op, value: c.value}))
+  }));
+  document.getElementById('interLogic').value = cfg.inter_logic || 'OR';
+  document.getElementById('forceKeepHr').checked = cfg.force_keep_hr !== false;
+  document.getElementById('keepNa').checked = cfg.keep_na !== false;
+  renderRules();
+  if (!rulesPanelOpen) toggleRulesPanel();
+}
+
+function loadPreset() {
+  syncRulesFromDOM();
+  const key = document.getElementById('presetSelect').value;
+  if (!key || !presets[key]) return;
+  applyConfig(presets[key]);
+}
+
+// ── import / export rules ────────────────────────────────────────────────────
+function exportRules() {
+  syncRulesFromDOM();
+  const cfg = {
+    rules: rulesState.rules.map(r => ({
+      name: r.name,
+      enabled: r.enabled,
+      negate: r.negate,
+      internal_logic: r.internal_logic,
+      conditions: r.conditions.map(c => ({field: c.field, op: c.op, value: c.value})),
+    })),
+    inter_logic: document.getElementById('interLogic').value,
+    force_keep_hr: document.getElementById('forceKeepHr').checked,
+    keep_na: document.getElementById('keepNa').checked,
+  };
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  const blob = new Blob([JSON.stringify(cfg, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `rules_${ts}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function triggerImport() {
+  document.getElementById('importFile').click();
+}
+
+function importRules(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const cfg = JSON.parse(e.target.result);
+      if (!cfg || !Array.isArray(cfg.rules)) {
+        alert('无效的规则文件：缺少 rules 数组');
+        return;
+      }
+      applyConfig(cfg);
+      alert(`已导入 ${rulesState.rules.length} 条规则（来自 ${file.name}）`);
+    } catch(err) {
+      alert('导入失败：' + err.message);
+    } finally {
+      event.target.value = '';  // 允许再次选择同一文件
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── build rules config from state ────────────────────────────────────────────
+function getRulesConfig() {
+  syncRulesFromDOM();
+  const active = rulesState.rules.filter(r => r.enabled);
+  if (!active.length) return null;
+  return {
+    rules: active,
+    inter_logic: document.getElementById('interLogic').value,
+    force_keep_hr: document.getElementById('forceKeepHr').checked,
+    keep_na: document.getElementById('keepNa').checked,
+  };
+}
+
+// ── fetch + render ────────────────────────────────────────────────────────────
+function debounceFilter() {
+  clearTimeout(_debTimer);
+  _debTimer = setTimeout(applyFilters, 350);
+}
+
+function getColor(s) {
+  if (s == null) return '#95a5a6';
+  if (s < 2) return '#e74c3c';
+  if (s < 4) return '#e67e22';
+  if (s < 6) return '#f39c12';
+  if (s < 8) return '#27ae60';
+  return '#1e8449';
+}
+function avgScore(p) {
+  const vals = AVG_DIMS.map(d => p[d]).filter(v => v != null);
+  return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : null;
+}
+
+function buildParams() {
+  const p = new URLSearchParams();
+  const q   = document.getElementById('searchBox').value.trim();
+  const ven = document.getElementById('venueFilter').value;
+  const yr  = document.getElementById('yearFilter').value;
+  const ig  = document.getElementById('integrityFilter').value;
+  const srt = document.getElementById('sortBy').value;
+  const mmr = document.getElementById('minMr').value.trim();
+  const mer = document.getElementById('maxEr').value.trim();
+  const mode= document.querySelector('input[name=mode]:checked')?.value || 'keep';
+  if (q)   p.set('q', q);
+  if (ven) p.set('venue', ven);
+  if (yr)  p.set('year', yr);
+  if (ig)  p.set('integrity', ig);
+  if (srt) p.set('sort', srt);
+  if (mmr) p.set('min_mr', mmr);
+  if (mer) p.set('max_er', mer);
+  if (document.getElementById('favOnly').checked) p.set('fav_only', '1');
+  p.set('mode', mode);
+  p.set('page', state.page);
+  p.set('per_page', state.per_page);
+  const cfg = getRulesConfig();
+  if (cfg) p.set('rules', JSON.stringify(cfg));
+  updateRulesBadge();
+  return p;
+}
+
+async function fetchAndRender() {
+  if (state.loading) return;
+  state.loading = true;
+  document.getElementById('container').innerHTML = '<div class="loading">加载中…</div>';
+  try {
+    const resp = await fetch(`/api/papers?${buildParams()}`);
+    const data = await resp.json();
+    state.total = data.total;
+    state.loading = false;
+    const offset = (data.page - 1) * data.per_page;
+    document.getElementById('container').innerHTML = data.papers.length
+      ? data.papers.map((p,i) => renderPaper(p, offset+i)).join('')
+      : '<div class="loading">没有符合条件的论文</div>';
+    updateStats(data);
+    updatePagination(data);
+  } catch(e) {
+    state.loading = false;
+    document.getElementById('container').innerHTML =
+      `<div class="loading" style="color:#e74c3c">加载失败：${e.message}<br>请确保 python3 serve.py 正在运行</div>`;
+  }
+}
+
+function applyFilters() { state.page = 1; fetchAndRender(); }
+
+function changePage(d) { state.page += d; window.scrollTo(0,0); fetchAndRender(); }
+
+// ── favorites ─────────────────────────────────────────────────────────────────
+async function toggleFavorite(btn) {
+  const pid = btn.dataset.pid;
+  if (!pid) return;
+  btn.disabled = true;
+  try {
+    const r = await fetch(`/api/favorites/toggle?paper_id=${encodeURIComponent(pid)}`, {method:'POST'});
+    const d = await r.json();
+    btn.classList.toggle('faved', d.is_favorite);
+    btn.textContent = d.is_favorite ? '★' : '☆';
+    btn.title = d.is_favorite ? '取消收藏' : '加入收藏';
+    document.getElementById('favCount').textContent = d.total;
+    // 如果是"仅看收藏"模式且取消收藏，重新拉一次列表
+    if (!d.is_favorite && document.getElementById('favOnly').checked) {
+      fetchAndRender();
+    }
+  } catch(e) {
+    alert('收藏操作失败: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function loadFavoritesCount() {
+  try {
+    const list = await fetch('/api/favorites').then(r=>r.json());
+    document.getElementById('favCount').textContent = list.length;
+  } catch(e) {}
+}
+
+// ── render paper ──────────────────────────────────────────────────────────────
+function renderBar(s) {
+  if (s == null) return '<span class="na-badge">N/A</span>';
+  const c = getColor(s);
+  return `<div class="score-row">
+    <span class="score-num" style="color:${c}">${s}</span>
+    <div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(100,s/10*100)}%;background:${c}"></div></div>
+  </div>`;
+}
+function renderDims(p) {
+  return Object.entries(DIM_MAP).map(([k,l]) => {
+    const s = p[k] ?? null, r = p[k+'_r'] || '', c = getColor(s);
+    return `<div class="dim-card" style="border-left-color:${c}">
+      <div class="dim-name">${l}</div>${renderBar(s)}
+      ${r?`<div class="dim-rationale">${r}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function renderTools(t) {
+  if (!t||!t.length) return '<span class="tool-tag-empty">摘要未透露</span>';
+  return t.map(x=>`<span class="tool-tag">${x}</span>`).join('');
+}
+function renderLogicalChain(p) {
+  const ig = p.ig||'absent';
+  const [lbl,cls] = INTEGRITY_MAP[ig]||['未知','integrity-absent'];
+  const badge = `<span class="integrity-badge ${cls}">${lbl}</span>`;
+  if (ig==='absent'||p.fuse) {
+    return `<div class="lc-section"><div class="section-title">逻辑链</div>
+      <p style="color:#7f8c8d;font-size:13px;margin-bottom:8px">${ig==='absent'?'无形式化数学论证链':'紧凑模式，详情不可用'}</p>
+      <div>完整性：${badge}</div></div>`;
+  }
+  return `<div class="lc-section"><div class="section-title">逻辑链 &nbsp;${badge}</div>
+    <div class="lc-grid">
+      <div class="lc-card"><div class="lc-label">前提假设</div><div class="lc-value">${p.lc_p||'—'}</div></div>
+      <div class="lc-card"><div class="lc-label">数学工具</div><div class="lc-tools">${renderTools(p.lc_t)}</div></div>
+      <div class="lc-card"><div class="lc-label">推导梗概</div><div class="lc-value">${p.lc_d||'—'}</div></div>
+      <div class="lc-card"><div class="lc-label">核心结论</div><div class="lc-value">${p.lc_c||'—'}</div></div>
+    </div></div>`;
+}
+function renderMeta(p) {
+  const rr = (p.rr&&p.rr.length)?`<div class="meta-card"><div class="meta-label">评审原始分</div>
+    <div class="meta-value">${p.rr.map(s=>`<span class="rr-score">${s}</span>`).join('')}</div></div>`:'';
+  const osn = p.osn?`<div class="meta-card" style="grid-column:1/-1"><div class="meta-label">超出量纲说明</div>
+    <div class="meta-value">${p.osn}</div></div>`:'';
+  return `<div class="section-title">元信息</div><div class="meta-grid">
+    <div class="meta-card"><div class="meta-label">领域 / 模态</div><div class="meta-value">${p.dm||'—'}</div></div>
+    <div class="meta-card"><div class="meta-label">营销话术</div><div class="meta-value">
+      ${p.mk_f?'<span class="flag-yes">⚠ 检测到</span>':'<span class="flag-no">✓ 未检测到</span>'}
+      ${p.mk_r?`<br><span style="font-size:11px;color:#636e72">${p.mk_r}</span>`:''}
+    </div></div>
+    <div class="meta-card"><div class="meta-label">分析置信度</div><div class="meta-value">
+      ${renderBar(p.cs)}${p.cs_r?`<span style="font-size:11px;color:#636e72">${p.cs_r}</span>`:''}
+    </div></div>
+    <div class="meta-card"><div class="meta-label">需要人工复核</div><div class="meta-value">
+      ${p.hr_f?'<span class="flag-yes">⚠ 是</span>':'<span class="flag-no">✓ 否</span>'}
+      ${p.hr_r?`<br><span style="font-size:11px;color:#636e72">${p.hr_r}</span>`:''}
+    </div></div>
+    ${rr}${osn}
+  </div>`;
+}
+function paperLink(paper) {
+  const id = paper.paper_id;
+  if (!id) return '';
+  const url = id.startsWith('pmlr-')
+    ? `https://proceedings.mlr.press/${id}`
+    : `https://openreview.net/forum?id=${id}`;
+  return `<a href="${url}" target="_blank" class="paper-link">↗ 论文链接</a>`;
+}
+function renderPaper(paper, idx) {
+  const p = paper.parsed||{};
+  const avg = avgScore(p), avgC = getColor(avg?parseFloat(avg):null);
+  const ig = p.ig||'absent', [lbl,cls] = INTEGRITY_MAP[ig]||['未知','integrity-absent'];
+  const venue = paper.venue?paper.venue.replace(/_/g,' '):'';
+  const pid = paper.paper_id||'';
+  const faved = paper.is_favorite;
+  return `<div class="paper-card">
+    <div class="paper-header">
+      <div class="paper-idx">#${idx+1}</div>
+      <div class="paper-header-info">
+        <div class="paper-title">${paper.title}</div>
+        <div class="paper-meta">
+          ${venue?`<span class="badge badge-venue">${venue}</span>`:''}
+          ${paper.year?`<span class="badge badge-year">${paper.year}</span>`:''}
+          <span class="integrity-badge ${cls}" style="font-size:11px;padding:2px 10px">${lbl}</span>
+          ${avg!=null?`<span class="badge badge-avg" style="background:${avgC}22;color:${avgC};border:1px solid ${avgC}55">均分 ${avg}</span>`:''}
+          ${paperLink(paper)}
+        </div>
+      </div>
+      <button class="fav-btn${faved?' faved':''}" data-pid="${pid}" onclick="toggleFavorite(this)" title="${faved?'取消收藏':'加入收藏'}">${faved?'★':'☆'}</button>
+    </div>
+    <div class="paper-body">
+      <div class="section-title">九维度评分</div>
+      <div class="dims-grid">${renderDims(p)}</div>
+      ${renderLogicalChain(p)}
+      ${renderMeta(p)}
+    </div>
+  </div>`;
+}
+
+function updateStats(data) {
+  const ps = data.papers;
+  const avgs = ps.map(p=>{const a=avgScore(p.parsed||{});return a?parseFloat(a):null}).filter(v=>v!=null);
+  const overall = avgs.length?(avgs.reduce((a,b)=>a+b,0)/avgs.length).toFixed(2):'—';
+  const intact = ps.filter(p=>p.parsed?.ig==='intact').length;
+  const mk = ps.filter(p=>p.parsed?.mk_f).length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="val">${data.total.toLocaleString()}</div><div class="lbl">符合条件</div></div>
+    <div class="stat-card"><div class="val">${ps.length}</div><div class="lbl">当前页</div></div>
+    <div class="stat-card"><div class="val">${overall}</div><div class="lbl">当前页均分</div></div>
+    <div class="stat-card"><div class="val">${intact}</div><div class="lbl">逻辑链完整</div></div>
+    <div class="stat-card"><div class="val">${mk}</div><div class="lbl">营销话术</div></div>`;
+}
+function paginationHtml(data) {
+  const totalPages = Math.ceil(data.total/data.per_page);
+  const from = (data.page-1)*data.per_page+1, to = Math.min(data.page*data.per_page, data.total);
+  return `<button onclick="changePage(-1)" ${data.page<=1?'disabled':''}>← 上一页</button>
+    <span>第 ${data.page}/${totalPages} 页 · 第 ${from}–${to} 篇</span>
+    <button onclick="changePage(1)" ${data.page>=totalPages?'disabled':''}>下一页 →</button>`;
+}
+function updatePagination(data) {
+  const h = paginationHtml(data);
+  document.getElementById('paginationTop').innerHTML = h;
+  document.getElementById('paginationBottom').innerHTML = h;
+}
+
+// ── mode radio listener ───────────────────────────────────────────────────────
+document.querySelectorAll('input[name=mode]').forEach(r => r.addEventListener('change', updateRulesBadge));
+
+// ── init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const [venues, years] = await Promise.all([
+      fetch('/api/venues').then(r=>r.json()),
+      fetch('/api/years').then(r=>r.json()),
+    ]);
+    const vSel = document.getElementById('venueFilter');
+    venues.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v.replace(/_/g,' ');vSel.appendChild(o);});
+    const ySel = document.getElementById('yearFilter');
+    years.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;ySel.appendChild(o);});
+    document.getElementById('subtitle').textContent =
+      '全量打分 · 9 维度量化分析 · ICLR / NeurIPS / ICML / TMLR / JMLR / COLT / SIOPT / SIMODS 2024–2026';
+    await loadPresets();
+    await loadFavoritesCount();
+    await fetchAndRender();
+  } catch(e) {
+    document.getElementById('subtitle').textContent = '服务器未启动，请运行 python3 serve.py';
+    document.getElementById('container').innerHTML =
+      `<div class="loading" style="color:#e74c3c">无法连接：${e.message}</div>`;
+  }
+}
+init();
+</script>
+</body>
+</html>
