@@ -93,6 +93,8 @@ mean_rank = ranks.mean(axis=1)
 final = argsort(mean_rank)[:target_n]
 ```
 
+**规则引擎 AND+NA bug**：AND 规则中字段为 null 时，原实现把 None 从结果列表过滤掉，导致 AND 条件意外缩减（如 `er>4 AND tea<6.5` 对 tea=null 的论文变成了只有 `er>4`）。修复：AND 规则中 None = False（字段缺失不满足条件，AND 中断）。tea 字段约 60% 为 null（纯理论论文无 tea 值，这是正常的），是 danchaofan 规则里暴露这个 bug 的原因。
+
 **FLD 的计算陷阱**：FLD 权重必须从**全量论文**（30k）计算，不能从规则过滤后的子集计算。过滤后 absent 论文几乎被清空，对照组变成 rescue 救回来的 outlier，权重会严重偏移（md 出现负权重）。
 
 **协方差矩阵条件数**：45.5，健康（<1000），无需 ridge 正则化。
@@ -149,5 +151,6 @@ combined = 0.7 × norm(fld) + 0.3 × norm(pca)
 - [x] 加入 Monte Carlo ensemble（N=100，joblib 并行，~30s on 32 cores）
 - [x] PCA 分析揭示维度冗余，设计组合评分（FLD×0.7 + PCA×0.3）
 - [x] 生成最终语料库 combined_corpus.jsonl（1500篇）
+- [x] 规则引擎软件工程审查：修复 AND 规则 NA 处理 bug，对齐三套引擎语义，补全测试
 - [ ] 确定 λ（当前 0.5，人工浏览语料库后调整）
-- [ ] 与 danchaofan 的 rules 合并后重新跑
+- [ ] danchaofan 确认规则后重跑 combined_score.py
