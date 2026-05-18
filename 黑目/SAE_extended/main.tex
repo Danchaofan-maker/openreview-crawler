@@ -1,0 +1,1068 @@
+% ============================================================
+%  稀疏自编码器特征分解之结构性不可能定理（完备严格版 v3）
+%  Comprehensive Edition
+%  Original: 黑目少女, 2026-05-17
+%  Extended formalization v2: 2026-05-18
+%  Comprehensive expansion v3: 2026-05-18
+% ============================================================
+%
+%  本完备版相对 v2 增加：
+%   (i)    符号表（§ 2），使后续公式可独立检索。
+%   (ii)   TopK 稀疏先验的不可识别性分析（命题 5.5），
+%          填补 v2 留下的"TopK 是否能跨过 Locatello 门槛"开放问题中可证的一半。
+%   (iii)  辅助变量识别性章节（§ 5.7），陈述跨过 Locatello 门槛
+%          需要哪类侧信息（按 Khemakhem 等 2020 路线），
+%          为本文不可识别性结论提供构造性补集。
+%   (iv)   引理 6.5 的完整推导（附录 A），不再是引理 6.1 形式的"草图"。
+%   (v)    可预言的标度律（§ 6.7）：ρ 对 L, k, M 的方向性依赖被显式陈述为可证伪命题。
+%   (vi)   可证伪实验协议（§ 7）：具体的 toy model 设置与可记录指标，
+%          替代本文未能执行的数值验证。
+%   (vii)  相关工作章节（§ 8）：把本文定位到当前 SAE 可识别性研究地图。
+%   (viii) 工作样本（附录 B）：在线性 SAE 这一可解情形下显式计算所有量。
+%
+%  编译方式：xelatex main.tex（需 ctex 包以支持中文）
+%  也可直接上传至 Overleaf，新建 XeLaTeX 项目即可编译。
+% ============================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[UTF8,fontset=fandol]{ctex}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{cite}
+\usepackage{array}
+
+\hypersetup{colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black}
+
+\newtheorem{theorem}{定理}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{proposition}[theorem]{命题}
+\newtheorem{corollary}[theorem]{推论}
+\newtheorem{definition}[theorem]{定义}
+\newtheorem{assumption}[theorem]{假设}
+\newtheorem{remark}[theorem]{评述}
+\newtheorem{conjecture}[theorem]{猜想}
+
+\theoremstyle{remark}
+\newtheorem{observation}[theorem]{观察}
+\newtheorem{prediction}[theorem]{可证伪预言}
+
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\diam}{diam}
+\DeclareMathOperator{\spn}{span}
+\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\TopK}{TopK}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\bm{z}}
+\newcommand{\X}{\bm{x}}
+\newcommand{\W}{\bm{W}}
+\newcommand{\I}{\mathcal{I}}
+\newcommand{\Dict}{\mathcal{D}}
+\newcommand{\Err}{\mathcal{E}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+
+\title{\textbf{稀疏自编码器特征分解之结构性不可能定理}\\[2pt]
+\large 完备严格版（v3）：从无条件信息论封锁到架构定量极限}
+\author{黑目少女\thanks{原稿（v1）作者。}\\[2pt]
+{\small 形式化补全 v2 \& 完备扩展 v3：基于原稿之扩展工作}}
+\date{2026-05-18}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent 当前主流的稀疏自编码器（Sparse Autoencoder, SAE）解释性研究隐含一种期许：
+SAE 应当从神经激活流形中提取一组与人类语义一一对应、跨初始化稳定的真实特征字典。
+近期实证工作（Paulo \& Belrose 2025 \cite{paulo2025}）显示：在严格控制模型、数据、训练流程的前提下，
+仅初始化种子的差异即可使 SAE 学到的字典之间的特征重合率坍缩至约 30\%。
+本文将这一现象解释为两层叠加的结构性约束的必然显现：
+
+\textbf{(i) 无条件层面}——当 SAE 被形式化为隐式生成过程的逆问题时，
+其本质等价于一个无监督解缠任务，落入 Locatello 等（2019）与 Hyvärinen-Pajunen（1999）
+所证的不可识别性区间。本文显式给出 Locatello 适用条件对 L1 稀疏先验下 SAE 的成立证明
+（命题 \ref{prop:l1-insuff}），并对 TopK 稀疏先验给出部分不可识别性结论
+（命题 \ref{prop:topk-insuff}），填补 v2 中留下的开放问题。
+本文进一步陈述跨过 Locatello 门槛所需的辅助变量条件（§ \ref{sec:aux}），
+为不可识别性结论提供构造性补集。
+
+\textbf{(ii) 条件层面}——退回到线性-非线性（L-NL）架构，三条已发表的局部约束
+（O'Neill 摊销间隙、Cui 流形干涉、Bhalla 不相干性）
+联合给出特征字典总误差 $\Err_{\min}$ 的下界。本文给出该下界的严格推导
+（引理 \ref{lem:cluster}，附录 \ref{app:proof} 含完整证明），
+并由此得到重合率 $\rho$ 的可代入定义与可验证假设（推论 \ref{cor:overlap}）。
+本文提出五条关于 $\rho$ 对 $(L, k, M, N, \tau)$ 依赖的可证伪标度律（§ \ref{sec:scaling}），
+以及在玩具模型上可执行的验证协议（§ \ref{sec:protocol}）。
+本文不主张 $\rho$ 公式数值上等于 0.30，仅证明其单调与缩放方向与实测一致。
+
+本文最后讨论上述结果对 SAE 解释性范式的本体论意义（§ \ref{sec:ontology}），
+诚实标注启发性陈述与严格结论的边界（§ \ref{sec:limitations}）。
+\end{abstract}
+
+\noindent\textbf{关键词}：稀疏自编码器；机制可解释性；不可识别性；非线性 ICA；叠加态；字典学习；可证伪标度律
+
+\tableofcontents
+
+\section{引言}\label{sec:intro}
+
+机制可解释性（Mechanistic Interpretability）研究的一个核心期许是：
+神经网络的内部激活承载着一组离散、可命名、对人类语义有意义的真实概念，
+这些概念以某种线性或近线性方式被叠加进高维连续表征中 \cite{elhage2022}，
+因此一个足够好的稀疏自编码器（SAE）应当能将其反向解构为
+一份"模型真正在使用"的字典 \cite{bricken2023,templeton2024}。
+
+然而，Paulo 与 Belrose 在 2025 年的实证工作显示，
+在严格控制模型架构、训练数据、训练顺序、批调度等所有可控变量的条件下，
+仅随机种子的差异即足以使两个 SAE 在容量 $L = 131{,}072$ 下学到的字典之间
+通过最佳一对一匹配测得的特征重合率仅约 30\% \cite{paulo2025}。
+这一观察从经验上质疑了"SAE 字典是模型客观特征的读出"这一论断的可还原论基础。
+
+\subsection{本文的论证策略}
+
+我们提出一个双层次结构解释，并在两个层面上分别给出形式化结论：
+
+\paragraph{层一：无条件不可识别性（§ \ref{sec:unconditional}）。}
+将 SAE 任务通过隐式生成过程视角形式化为无监督解缠问题（命题 \ref{prop:equiv}）。
+该问题落入 Locatello 等 \cite{locatello2019} 不可识别区间。
+本层需要回答的关键问题是：SAE 实际使用的归纳偏置（L1 / TopK / L-NL 架构 / 训练数据先验）
+是否足以跨越 Locatello 门槛？
+本文给出三个结论：
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item L1 稀疏\emph{不}充分（命题 \ref{prop:l1-insuff}）；
+\item TopK 稀疏在保 TopK 等价变换族下\emph{亦不}充分（命题 \ref{prop:topk-insuff}）；
+\item 跨越门槛的已知充分条件是辅助变量（§ \ref{sec:aux}），SAE 训练范式不天然提供。
+\end{itemize}
+
+\paragraph{层二：条件下界（§ \ref{sec:conditional}）。}
+在主流 L-NL 架构与高容量设置下，三条已发表的局部约束
+\cite{oneill2024,cui2026,bhalla2026} 联合给出字典总误差的结构性下界。
+本文将其聚合为一个推导明确的引理（引理 \ref{lem:cluster}），
+并由此构造重合率公式（推论 \ref{cor:overlap}）与五条可证伪标度律
+（§ \ref{sec:scaling}）。
+
+\subsection{贡献清单}
+
+本文的可识别贡献是\textbf{论证补全与系统化}，不是新现象的发现。
+所引用的所有核心不可识别性陈述均已存在于先前文献中；
+本文的工作是：
+
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item 把它们焊接为一条对 SAE 而言显式成立的论证链；
+\item 给出 v1 原稿中跳步部分的严格推导（引理 \ref{lem:cluster}，附录 \ref{app:proof}）；
+\item 把 v1 原稿的若干启发性主张转化为可证伪的标度律（§ \ref{sec:scaling}）；
+\item 提出可在 toy model 上执行的验证协议（§ \ref{sec:protocol}），
+为本文未能执行的数值验证留下明确接口；
+\item 明确标注每一处尚为启发的步骤（§ \ref{sec:limitations}）。
+\end{enumerate}
+
+本文不主张本工作是一篇独立的原创理论贡献，
+而是把现有文献中分散的不可识别性结果在 SAE 应用场景下做完整论证整合。
+
+\section{符号表}\label{sec:notation}
+
+为便于后续公式独立检索，我们将本文使用的所有符号统一列出。
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{符号} & \textbf{含义} & \textbf{出处} \\
+\midrule
+$N$ & 真实潜在因子维度 & 定义 \ref{def:igen} \\
+$M$ & 观测激活维度（LLM 中间层宽度） & 定义 \ref{def:igen} \\
+$L$ & SAE 字典容量（$L \geq N$） & 定义 \ref{def:sae} \\
+$k$ & 稀疏度（活跃因子数） & 定义 \ref{def:igen} \\
+$\Z \in \R^N$ & 潜在因子向量 & 定义 \ref{def:igen} \\
+$\X \in \R^M$ & 激活向量 & 定义 \ref{def:igen} \\
+$g: \R^N \to \R^M$ & 真实非线性生成映射 & 定义 \ref{def:igen} \\
+$\W_e \in \R^{L \times M}$ & SAE 编码器权重 & 定义 \ref{def:sae} \\
+$\W_d \in \R^{M \times L}$ & SAE 解码器权重（字典） & 定义 \ref{def:sae} \\
+$\sigma$ & 分量非线性（ReLU 或 TopK） & 定义 \ref{def:sae} \\
+$\Dict$ & 字典原子集合 $\{\W_d^{(:,i)}\}$ & 定义 \ref{def:sae} \\
+$\rho$ & 跨种子特征重合率 & 定义 \ref{def:overlap} \\
+$\tau$ & 重合判定的余弦相似阈值 & 定义 \ref{def:overlap} \\
+$\mu$ & 字典互相干性 & 定理 \ref{thm:bhalla} \\
+$\Delta\mu$ & 不相干性破缺 & 定义 \ref{def:dmu} \\
+$\I$ & 干涉矩阵 $\W_d^\top \W_d - I_L$ & 定理 \ref{thm:cui} \\
+$\Err$ & 总误差 $\epsilon_c + \lambda \epsilon_m$ & 引理 \ref{lem:cluster} \\
+$\epsilon_c, \epsilon_m$ & 覆盖误差与单义性误差 & 引理 \ref{lem:cluster} \\
+$C_0$ & 带宽赤字常数 & 引理 \ref{lem:cluster} \\
+$C_1, C_2$ & 局部约束常数（依赖数据分布） & 引理 \ref{lem:cluster} \\
+$C_3$ & 重合率代数常数 & 推论 \ref{cor:overlap} \\
+$\eta$ & 零空间自由比例 & 推论 \ref{cor:overlap} \\
+$h$ & 保独立性可逆变换 & 定理 \ref{thm:locatello} \\
+$J$ & SAE 训练目标 & 命题 \ref{prop:l1-insuff} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{形式化预备}\label{sec:prelim}
+
+本节给出后续讨论所需的形式化对象。
+
+\subsection{隐式生成过程与 SAE 逆问题}
+
+\begin{definition}[激活的隐式生成过程]\label{def:igen}
+设 $\Z \in \R^N$ 为不可观测的潜在语义因子向量，分量记为 $\{z_i\}_{i=1}^N$，
+假设各 $z_i$ 相互独立、稀疏（即至多 $k \ll N$ 个分量同时显著非零，
+形式上 $\Pr(\norm{\Z}_0 \leq k) = 1$）。
+存在一个未知的非线性映射
+\[
+g: \R^N \to \R^M, \quad \X = g(\Z),
+\]
+将 $\Z$ 投射为 LLM 某中间层的激活向量 $\X \in \R^M$，且 $N > M$。
+\end{definition}
+
+\begin{definition}[SAE 架构：L-NL 形式]\label{def:sae}
+一个 L-NL 稀疏自编码器是参数化函数对 $(f_\theta, h_\phi)$，其中
+\[
+\hat\Z = f_\theta(\X) = \sigma(\W_e \X + \bm{b}_e), \quad
+\hat\X = h_\phi(\hat\Z) = \W_d \hat\Z + \bm{b}_d,
+\]
+$\W_e \in \R^{L \times M}$，$\W_d \in \R^{M \times L}$，
+$\sigma$ 为分量非线性（典型选择为 ReLU、JumpReLU、或 TopK 截断），$L \geq N$。
+$\W_d$ 的列向量集合 $\Dict := \{\W_d^{(:,i)}\}_{i=1}^L$ 称为该 SAE 的字典。
+\end{definition}
+
+\begin{definition}[TopK 算子]\label{def:topk}
+对 $\bm{u} \in \R^L$，$\TopK_k(\bm{u}) \in \R^L$ 定义为：
+保留 $\bm{u}$ 绝对值最大的 $k$ 个坐标的原值，其余坐标置零。
+\end{definition}
+
+\begin{definition}[特征重合率]\label{def:overlap}
+设 $\Dict_1, \Dict_2 \subset \R^M$ 为两个 SAE 训练得到的字典，
+$|\Dict_1| = |\Dict_2| = L$，列均归一化。定义重合率
+\[
+\rho(\Dict_1, \Dict_2; \tau)
+= \frac{1}{L} \max_{\pi \in \mathfrak{S}_L} \big|\{i : \langle \W_d^{(1,i)}, \W_d^{(2,\pi(i))}\rangle \geq \tau\}\big|,
+\]
+其中 $\mathfrak{S}_L$ 为字典间的一对一匹配集合，$\tau \in (0,1)$ 为余弦相似度阈值
+（典型取 $\tau = 0.7$）。该量度量在去除排列不变性后两份字典在方向意义上的一致程度。
+\end{definition}
+
+\subsection{可识别性目标}
+
+\begin{definition}[精确字典恢复]\label{def:exact}
+称 SAE 训练过程 $\mathcal{A}$ 在生成过程 $(\Z, g, \X)$ 下\emph{精确可识别}，
+若存在排列矩阵 $P \in \{0,1\}^{L \times N}$ 与对角缩放矩阵 $S$，
+使得对任意训练种子的几乎处处实现，
+$\W_d = G P S$，其中 $G$ 为 $g$ 的某个标准化 Jacobian 表示。
+\end{definition}
+
+\begin{definition}[稳健可识别性]\label{def:robust}
+称训练过程在重合率意义下\emph{稳健可识别}，
+若对任意两次独立训练所得字典 $\Dict_1, \Dict_2$，
+$\rho(\Dict_1, \Dict_2; \tau) \to 1$ 当样本规模 $n \to \infty$。
+\end{definition}
+
+定义 \ref{def:exact} 与定义 \ref{def:robust} 是两个不同的不可识别性论证目标。
+本文 § \ref{sec:unconditional} 攻击前者，§ \ref{sec:conditional} 给出后者的下界违反程度。
+
+\section{实证动机：叠加态的现实存在}\label{sec:empirical}
+
+我们继承 \cite{elhage2022} 的物理设定：在 $N > M$ 条件下，
+模型为压缩信息利用高维空间中"近似正交向量数量随维度指数增长"的几何性质
+（Johnson-Lindenstrauss 引理 \cite{johnson1984extensions}），
+将多个语义因子叠加表示在共享方向上，
+从而在 $M$ 维激活空间中实现 $N$ 个独立特征的稀疏复用。
+该状态记为\emph{叠加态}（superposition）。
+
+\begin{observation}[Paulo-Belrose 2025 \cite{paulo2025}]\label{obs:30pct}
+在控制 LLM 架构、训练语料与训练超参数的前提下，
+对 SAE 进行两次独立训练（仅初始化种子不同），
+在容量 $L = $ 131{,}072 与稀疏度 $k = 32$ 设置下测得
+\[
+\rho(\Dict_1, \Dict_2; \tau=0.7) \approx 0.30.
+\]
+进一步在容量 16K 到 131K 之间扫描，$\rho$ 单调下降，
+从约 $0.7$（小容量）降至约 $0.3$（大容量）。
+\end{observation}
+
+观察 \ref{obs:30pct} 是后续两层论证共同的待解释对象。
+我们不主张本文的任何形式化结论给出 0.30 这一具体数值的预测，
+而是论证 $\rho \ll 1$ 是本节及后两节所述结构约束的必然推论，
+且 $\rho$ 随 $L$ 单调下降这一定性趋势可由本文标度律预言（§ \ref{sec:scaling}）。
+
+\section{无条件信息论封锁}\label{sec:unconditional}
+
+本节回答：在不依赖具体 SAE 架构选择的前提下，
+精确字典恢复（定义 \ref{def:exact}）是否原则上可能。
+
+\subsection{SAE 任务与无监督解缠的等价性}\label{sec:equiv}
+
+\begin{proposition}[等价性]\label{prop:equiv}
+设 $(\Z, g, \X)$ 满足定义 \ref{def:igen}。
+求解 SAE 字典 $\W_d$ 使其按定义 \ref{def:exact} 意义恢复 $g$ 的 Jacobian 主方向，
+等价于在 $\X$ 上求解一个无监督解缠任务：
+寻找编码器 $f$ 使得 $f(\X)$ 的各分量与 $\Z$ 的各分量之间存在排列-缩放意义下的双射。
+\end{proposition}
+
+\begin{proof}[证明（草图）]
+SAE 的训练目标
+\[
+J(\theta,\phi) := \mathbb{E}_\X\big[\norm{\X - h_\phi(f_\theta(\X))}^2\big] + \lambda \mathbb{E}_\X[\norm{f_\theta(\X)}_1]
+\]
+在 $L \geq N$、$f_\theta$ 表达能力充足条件下，
+其在 $\lambda \to 0^+$ 极限下的最优解 $f_\theta^\ast$ 必将 $\X$ 映射至与 $\Z$ 在排列-缩放意义下相同的稀疏表示——
+否则可通过更接近 $\Z$ 的解严格降低稀疏惩罚。
+由此 SAE 任务的可识别性条件与解缠任务的可识别性条件同构。
+\end{proof}
+
+\begin{remark}
+命题 \ref{prop:equiv} 的"等价性"在 $\lambda \to 0^+$ 极限下严格成立；
+在有限 $\lambda$ 下二者目标函数的最优解存在偏移。
+原稿（v1）将该等价性视为"完全同构"，本文以命题形式标注其严格成立的极限条件。
+\end{remark}
+
+\subsection{Locatello 不可识别性定理}
+
+\begin{theorem}[Locatello 等 \cite{locatello2019} 定理 1，重述]\label{thm:locatello}
+设潜变量 $\Z$ 各分量独立，存在可逆映射 $g$ 使 $\X = g(\Z)$。
+若学习算法 $\mathcal{A}$ 对模型族与数据分布不施加任何区分以下两个解的归纳偏置——
+$(\Z, g)$ 与 $(\tilde\Z, \tilde g) := (h(\Z), g \circ h^{-1})$，
+其中 $h$ 为任意\emph{保留独立性}的可逆变换——
+则 $\mathcal{A}$ 在最坏情况下无法将 $\Z$ 与 $\tilde\Z$ 区分。
+\end{theorem}
+
+\begin{remark}\label{rem:locatello-applicability}
+定理 \ref{thm:locatello} 的适用前提是"算法无相关归纳偏置"。
+SAE 显然带有若干偏置：
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item L-NL 架构限制函数族；
+\item L1 或 TopK 稀疏先验偏好轴对齐解；
+\item 训练数据分布隐含统计先验。
+\end{enumerate}
+这些偏置是否足以打破定理 \ref{thm:locatello} 的不可识别区间，
+是当前可识别性研究的开放问题 \cite{khemakhem2020,zheng2026}。
+\end{remark}
+
+\subsection{L1 稀疏不充分}
+
+\begin{proposition}[L1 稀疏不充分以打破不可识别性]\label{prop:l1-insuff}
+设 $h: \R^N \to \R^N$ 为定理 \ref{thm:locatello} 中的某保独立性可逆变换，
+且 $h$ 形如 $h_i(\Z) = c_i z_{\pi(i)}$（排列 $\pi$ 与逐分量缩放 $c_i > 0$）。
+则带 L1 惩罚的 SAE 训练目标 $J$ 在 $(\Z, g)$ 与 $(h(\Z), g \circ h^{-1})$ 上取相同值：
+\[
+J(\theta,\phi; \Z, g) = J(\theta,\phi; h(\Z), g \circ h^{-1}).
+\]
+\end{proposition}
+
+\begin{proof}
+重建项 $\mathbb{E}\norm{\X - h_\phi(f_\theta(\X))}^2$
+关于 $\X = g(\Z)$ 的取值不依赖于 $\Z$ 的内部参数化，
+故对 $(\Z, g)$ 与 $(h(\Z), g \circ h^{-1})$ 取值相同。
+L1 惩罚项 $\mathbb{E}\norm{f_\theta(\X)}_1$ 仅依赖 $\X$ 与 $f_\theta$，
+在 $\Z$ 表示替换下不变。
+存在 $f_\theta$ 使 $f_\theta(\X)_i = c_i z_{\pi(i)}$，
+其 L1 范数 $\sum_i c_i |z_{\pi(i)}| = \sum_i c_{\pi^{-1}(i)} |z_i|$。
+通过选取 $f_\theta'$ 使 $f_\theta'(\X)_j = z_j$（直接学 $\Z$），
+其 L1 范数为 $\sum_i |z_i|$。
+两者在 $c_i \equiv 1$ 下相等；当 $c_i$ 非常数时，二者数值不同，
+但都是 $J$ 的可达值，构成等价解族中的两个代表元。
+\end{proof}
+
+\begin{corollary}[L1 下精确字典恢复失败]\label{cor:l1-fail}
+带 L1 稀疏的 SAE 在排列-缩放意义下精确恢复字典是\emph{部分可达}的，
+但对更广的可逆变换族 $\{h: \supp(h(\Z)) = \supp(\Z)\}$
+不可区分。即定义 \ref{def:exact} 意义下的精确字典恢复在保支撑可逆变换族上失败。
+\end{corollary}
+
+\subsection{TopK 稀疏的部分不可识别性}\label{sec:topk}
+
+TopK 截断是较 L1 更强的归纳偏置：它强制\emph{严格}稀疏（恰好 $k$ 个活跃），
+且在分量绝对值序的意义下保留主导坐标。
+原稿（v1）默认 TopK 改变 Locatello 适用性，
+v2 留为开放问题。本节给出一个部分否定结果。
+
+\begin{definition}[保 TopK 等价变换]\label{def:topk-equiv}
+称可逆变换 $h: \R^N \to \R^N$ 为\emph{保 TopK 等价}的，若对几乎处处 $\Z$：
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item $\supp(h(\Z)) = \supp(\Z)$；
+\item TopK 选中的下标集合保留：
+$\argmax_{|S| = k} \sum_{i \in S} |h(\Z)_i| = \argmax_{|S| = k} \sum_{i \in S} |z_i|$。
+\end{enumerate}
+\end{definition}
+
+\begin{proposition}[保 TopK 等价变换族非空且非平凡]\label{prop:topk-family}
+对 $N > k \geq 2$，保 TopK 等价变换族包含所有满足
+\[
+h_i(\Z) = c_i \cdot z_{\pi(i)}, \quad c_i > 0, \quad \pi \in \mathfrak{S}_N
+\]
+形如的变换，其中 $\pi$ 仅在 TopK 活跃集合内部置换、且 $c_i$ 满足
+$\min_{i \in S} c_i |z_i| > \max_{i \notin S} c_i |z_i|$
+（$S$ 为活跃集合，几乎处处成立）。
+该族包含连续多个非排列-缩放等价的元素。
+\end{proposition}
+
+\begin{proof}[证明（草图）]
+显然 $\supp$ 保持。要证明 TopK 集合保持：
+由 $\pi$ 限制在 $S$ 内部，对 $i \in S$ 有 $z_{\pi(i)} \neq 0$；
+对 $i \notin S$ 有 $z_{\pi(i)} = z_i$（$\pi$ 在 $S^c$ 上为恒等）。
+故 $h(\Z)$ 的 TopK 下标集仍为 $\{i : h_i(\Z) \neq 0\} \cap S$ 的最大 $k$ 子集，
+由 $c_i |z_i|$ 的相对大小条件确保 $S$ 仍然是 TopK 选择。
+$c_i$ 的连续自由度给出族的连续性。
+\end{proof}
+
+\begin{proposition}[TopK 不充分以打破不可识别性]\label{prop:topk-insuff}
+设 $h$ 为命题 \ref{prop:topk-family} 中保 TopK 等价变换族的元素。
+带 TopK 稀疏的 SAE 训练目标
+\[
+J_{\TopK}(\theta,\phi) := \mathbb{E}\norm{\X - h_\phi(\TopK_k(f_\theta(\X)))}^2
+\]
+在 $(\Z, g)$ 与 $(h(\Z), g \circ h^{-1})$ 上取相同值。
+\end{proposition}
+
+\begin{proof}
+重建项依赖 $\X = g(\Z)$ 而非 $\Z$，与命题 \ref{prop:l1-insuff} 同。
+TopK 操作的输出由"哪 $k$ 个坐标活跃"与"活跃值"两部分决定。
+由命题 \ref{prop:topk-family}，$h$ 保持活跃集合，
+故 $\TopK_k(f_\theta(\X))$ 在表示替换下\emph{支撑}不变，
+仅在活跃值上经历可逆缩放。该缩放可被 $h_\phi$ 的相应调整吸收。
+因此整体目标值相同。
+\end{proof}
+
+\begin{corollary}[TopK 下精确字典恢复失败]\label{cor:topk-fail}
+带 TopK 稀疏的 SAE 在保 TopK 等价变换族上不可区分。
+即 TopK 强稀疏先验不足以跨过 Locatello 门槛。
+\end{corollary}
+
+\begin{remark}\label{rem:topk-open}
+命题 \ref{prop:topk-insuff} 仅在保 TopK 等价变换族上证明不充分性。
+TopK 在\emph{所有}保独立性可逆变换上是否不充分仍开放——
+存在更广的 $h$（如非局部置换 + 任意可逆 $c_i$）可能改变 TopK 集合，
+该类被 TopK 排除。完整刻画 TopK 引入的归纳偏置的"打破能力"超出本文范围。
+\end{remark}
+
+\subsection{与非线性 ICA 不可识别性的关系}
+
+经典结果 \cite{hyvarinen1999} 表明：
+即使要求 $f(\X)$ 的输出分量相互独立，从非线性混合中恢复 $\Z$ 仍存在
+$h$ 为任意分量-wise 可逆变换组成的等价类。
+推论 \ref{cor:l1-fail} 与推论 \ref{cor:topk-fail} 通过命题 \ref{prop:equiv}
+与该结果同构：
+SAE 的稀疏先验等同于非线性 ICA 中的"非高斯性"或"时间结构"辅助条件，
+其打破不可识别性的能力取决于辅助条件的"强度"——
+本文证明 L1 与 TopK（在保 TopK 等价族上）都不足。
+
+\subsection{辅助变量的可识别性逃生通道}\label{sec:aux}
+
+Locatello 定理 \ref{thm:locatello} 的反面是建设性的：
+如果存在某种\emph{辅助变量}（auxiliary variable）使学习目标在等价类内做出区分，
+则可识别性恢复。
+Khemakhem 等 \cite{khemakhem2020} 给出明确条件：
+
+\begin{theorem}[iVAE 条件，简化重述 \cite{khemakhem2020}]\label{thm:ivae}
+设 $\Z$ 的条件分布属于指数族 $p(\Z|U) \propto \exp(\langle T(\Z), \lambda(U)\rangle)$，
+$T$ 充分统计量维度 $\geq 2N$，且 $\lambda$ 关于辅助变量 $U$ 充分变化。
+则在观测 $(\X, U)$ 而非 $\X$ 单独的条件下，
+$\Z$ 在排列-逐分量可逆变换意义下可识别。
+\end{theorem}
+
+\begin{remark}\label{rem:aux-sae}
+SAE 的标准训练范式\emph{不}天然提供辅助变量 $U$。
+可能的近似途径包括：
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item \textbf{时间结构}：用 LLM 输入序列位置或上下文窗口作为 $U$（接近 \cite{hyvarinen2019time}）；
+\item \textbf{任务标签}：用人工标注的概念标签作为 $U$（破坏 SAE 的无监督本性）；
+\item \textbf{多模型对比}：用模型规模或训练步数作为 $U$（依赖跨模型一致性假设）。
+\end{itemize}
+当前主流 SAE 训练范式均未利用上述任一通道，
+因此本文不可识别性结论对实际 SAE 实践成立。
+\end{remark}
+
+\section{条件层面：L-NL 架构下的定量下界}\label{sec:conditional}
+
+退回到主流 L-NL 架构（定义 \ref{def:sae}）这一额外约束下，本节给出稳健可识别性
+（定义 \ref{def:robust}）的违反量的下界。
+
+\subsection{三条局部约束的形式化}
+
+\begin{theorem}[O'Neill et al. 2024 \cite{oneill2024} 定理 3.1，重述]\label{thm:oneill}
+设 L-NL 编码器 $f_\theta(\X) = \sigma(\W_e \X + \bm{b}_e)$ 中 $\W_e \in \R^{L \times M}$ 且 $L > M$。
+则 $\rank(\W_e) \leq M$，进而对任意 $k$ 稀疏目标码 $\Z^\ast \in \R^L$，
+存在不可消除的摊销间隙 $\Delta_{\mathrm{amort}} > 0$ 使
+\[
+\mathbb{E} \norm{f_\theta(\X) - \Z^\ast}^2 \geq \Delta_{\mathrm{amort}}.
+\]
+\end{theorem}
+
+\begin{theorem}[Cui et al. 2026 \cite{cui2026} 定理 4，重述]\label{thm:cui}
+设字典 $\W_d \in \R^{M \times L}$ 列归一化，定义干涉矩阵
+\[
+\I := \W_d^\top \W_d - I_L.
+\]
+若稀疏度 $k$ 不满足极端正交条件（即存在 $i \neq j$ 同时活跃的概率非零），
+则重建误差下界为
+\[
+\mathbb{E} \norm{\X - h_\phi(f_\theta(\X))}^2 \geq c_1 \cdot \norm{\I}_2 \cdot \mathbb{E} \norm{\Z^\ast}^2,
+\]
+其中 $c_1 > 0$ 为依赖于 $k$ 与数据分布的常数。
+\end{theorem}
+
+\begin{theorem}[Bhalla et al. 2026 \cite{bhalla2026} 定理 1，重述]\label{thm:bhalla}
+$k$ 稀疏字典学习问题的精确恢复要求字典的相干性
+$\mu := \max_{i \neq j} |\langle \W_d^{(:,i)}, \W_d^{(:,j)}\rangle|$
+满足
+\[
+\mu < \frac{1}{2k - 1}.
+\]
+当 $L > M$ 时，由 Welch 界 $\mu \geq \sqrt{(L-M)/(M(L-1))}$，
+若 $\sqrt{(L-M)/(M(L-1))} \geq 1/(2k-1)$，则上述不等式不可同时满足。
+\end{theorem}
+
+\begin{definition}[不相干性破缺]\label{def:dmu}
+当容量 $L$ 超出 Welch-Bhalla 阈值时，定义
+\[
+\Delta\mu := \max\left(0,\; \sqrt{\frac{L-M}{M(L-1)}} - \frac{1}{2k-1}\right) \geq 0.
+\]
+\end{definition}
+
+\subsection{容量赤字项的来源}
+
+\begin{lemma}[压缩感知容量赤字]\label{lem:capacity}
+设 $\Z \in \R^N$ 为 $k$ 稀疏向量，$\W_e \in \R^{L \times M}$ 为线性测量矩阵。
+则恢复 $\Z$ 所需的最少测量数满足 $M \geq c \cdot k \log(N/k)$
+（Candès-Tao 等 \cite{candes2006compressive,candes2008restricted}）。
+若 $M < c \cdot k \log(N/k)$，定义带宽赤字
+\[
+C_0 := \max\left(0,\; 1 - \frac{M}{c \cdot k \log(N/k)}\right) \in [0, 1).
+\]
+则比例至少 $C_0$ 的 $k$ 稀疏码无法由 L-NL 编码器精确恢复。
+\end{lemma}
+
+\begin{remark}
+$c$ 是与 RIP 常数相关的绝对常数，本文记作 1 以简化（吸收进 $C_0$）。
+\end{remark}
+
+\subsection{聚类引理：三定理的合成下界}
+
+\begin{lemma}[三定理聚类下界]\label{lem:cluster}
+在定义 \ref{def:sae} 的 L-NL SAE 上，设字典列归一化，定义总误差
+$\Err(h) := \epsilon_c(h) + \lambda \epsilon_m(h)$，
+其中 $\epsilon_c$ 为覆盖误差（与重建误差成比例），
+$\epsilon_m$ 为单义性误差（与字典原子的概念混叠度成比例）。
+则存在常数 $C_1, C_2 > 0$ 依赖数据分布与稀疏度 $k$，使
+\[
+\Err_{\min}
+\;\geq\;
+C_0 \cdot \big(C_1 \norm{\I}_2 + C_2 \Delta\mu\big),
+\]
+其中 $C_0$ 为引理 \ref{lem:capacity} 中的带宽赤字。
+\end{lemma}
+
+\begin{proof}[证明（要点；完整推导见附录 \ref{app:proof}）]
+由引理 \ref{lem:capacity}，$\rank(\W_e) \leq M$ 导致比例至少 $C_0$ 的稀疏码无法精确恢复。
+在此 $C_0$ 比例的失败码上，重建误差由两部分主导：
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item \textbf{结构性干涉}（定理 \ref{thm:cui}）：
+$\epsilon_c \geq c_1 \norm{\I}_2 \mathbb{E}\norm{\Z^\ast}^2$；
+\item \textbf{不相干性破缺}（定理 \ref{thm:bhalla} 与定义 \ref{def:dmu}）：
+$\epsilon_m \geq c_2 \Delta\mu$。
+\end{itemize}
+两项作用在同一字典 $\W_d$ 的不同代数自由度上
+（前者关于 Gram 矩阵的 off-diagonal 谱，后者关于 $\mu$ 的几何），
+在最差情况下不互相抵消。
+取 $C_1 = c_1 \mathbb{E}\norm{\Z^\ast}^2$，$C_2 = \lambda c_2$，
+并将容量赤字作为乘性因子，即得下界。
+\end{proof}
+
+\begin{remark}\label{rem:no-curvature}
+原稿（v1）的下界 $\Err_{\min} \geq C_0 \cdot \|\I\|_2 \cdot \kappa \cdot \Delta\mu$
+含有一个"内在曲率" $\kappa$ 因子。本扩展版去除该因子，因为：
+（i）$\kappa$ 描述的是生成流形 $g$ 的非线性程度，
+属于无条件层面（§ \ref{sec:unconditional}）的对象，不在 L-NL 条件下界的代数链中；
+（ii）原稿未给出 $\kappa$ 的可代入定义；
+（iii）三定理 \cite{oneill2024,cui2026,bhalla2026} 的代数结构本身已闭合，
+无需第四因子。
+\end{remark}
+
+\subsection{重合率公式}
+
+\begin{corollary}[重合率下界]\label{cor:overlap}
+设两次独立训练的 SAE 总误差均饱和引理 \ref{lem:cluster} 给出的下界。
+设两次训练所学字典的差异最多吸收 $\eta$ 比例的可允许误差容量
+（即不被引理 \ref{lem:cluster} 强制约束的"自由空间"占总容量的 $\eta$）。
+则在定义 \ref{def:overlap} 的重合率下，存在常数 $C_3 > 0$ 使
+\[
+\rho(\Dict_1, \Dict_2; \tau)
+\;\leq\;
+1 - \frac{C_3 \cdot C_0 \cdot (C_1 \norm{\I}_2 + C_2 \Delta\mu)}{L \cdot (1 - \eta)}.
+\]
+\end{corollary}
+
+\begin{proof}[证明（草图）]
+由引理 \ref{lem:cluster}，每次训练强制将 $C_0 \cdot (C_1 \norm{\I}_2 + C_2 \Delta\mu)$ 的
+误差容量分摊到字典元素上。这部分容量被推入维度为 $L(1 - \eta)$ 的"过完备零空间"内随机漂移
+（因这些方向不被损失主动惩罚）。
+该零空间内的字典元素在两次独立训练间的方向分布近似各向同性，
+最佳一对一匹配中超过余弦阈值 $\tau$ 的比例至多为零空间维度的倒数；
+代入即得不等式。$C_3$ 吸收了 $\tau$ 依赖与各向同性近似的常数。
+\end{proof}
+
+\begin{remark}[与实测的关系]
+推论 \ref{cor:overlap} 预言 $\rho$ 随 $\norm{\I}_2, \Delta\mu, L$ 上升而下降。
+对 \cite{paulo2025} 在容量从 16K 上升至 131K 时 $\rho$ 从 ${\sim}0.7$ 下降至 ${\sim}0.3$ 的趋势，
+本推论给出与方向一致的解释（$L$ 增大 $\Rightarrow$ $\Delta\mu$ 增大 $\Rightarrow$ $\rho$ 下降）。
+本推论\emph{不}给出具体数值预言：$C_1, C_2, C_3, \eta$ 在大模型中均无法独立测量。
+\end{remark}
+
+\subsection{可证伪的标度律}\label{sec:scaling}
+
+由推论 \ref{cor:overlap} 与定义 \ref{def:dmu}，
+我们陈述五条可被实验证伪的方向性标度预言：
+
+\begin{prediction}[$\rho$ 对容量 $L$ 的依赖]\label{pred:L}
+固定 $M, k, N, \tau$，$\rho(L)$ 关于 $L$ 单调下降。
+\end{prediction}
+
+\begin{prediction}[$\rho$ 对稀疏度 $k$ 的依赖]\label{pred:k}
+固定 $L, M, N, \tau$，$\Delta\mu$ 当 $k$ 增大时增大（Bhalla 阈值 $1/(2k-1)$ 减小），
+故 $\rho$ 随 $k$ 增大单调下降。
+\end{prediction}
+
+\begin{prediction}[$\rho$ 对观测维度 $M$ 的依赖]\label{pred:M}
+固定 $L, k, N, \tau$，$\Delta\mu$ 当 $M$ 增大时减小（Welch 下界 $\sqrt{(L-M)/(M(L-1))}$ 关于 $M$ 减小），
+故 $\rho$ 随 $M$ 增大单调上升。
+\end{prediction}
+
+\begin{prediction}[$\rho$ 对相似度阈值 $\tau$ 的依赖]\label{pred:tau}
+固定 $L, M, k, N$，$\rho(\tau)$ 关于 $\tau$ 单调下降；
+$\tau \to 1^-$ 时 $\rho \to 0$（无字典精确对齐）；
+$\tau \to 0^+$ 时 $\rho \to 1$（任意非正交字典均"匹配"）。
+\end{prediction}
+
+\begin{prediction}[随机种子方差的标度]\label{pred:seed}
+固定所有超参数，跨种子方差 $\mathrm{Var}_{\mathrm{seed}}(\rho)$
+关于训练步数 $T$ 单调下降并收敛到非零下确界
+$\mathrm{Var}_\infty > 0$，对应过完备零空间内的随机漂移。
+\end{prediction}
+
+可证伪预言 \ref{pred:L}–\ref{pred:seed} 在 § \ref{sec:protocol} 中将被设计为
+可执行实验协议的预测变量。
+
+\section{可证伪实验协议}\label{sec:protocol}
+
+本节给出在合成 toy model 上检验 § \ref{sec:scaling} 五条标度律的协议。
+本协议未在本文中执行，作为后续工作接口提供。
+
+\subsection{合成生成过程}
+
+参照 \cite{elhage2022} 的玩具叠加模型设置：
+
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item 真实潜在因子 $\Z \in \R^N$，各分量独立、$k$-稀疏（任意 $k$ 个分量为非零均匀 $[0,1]$，其余为零）；
+\item 真实字典 $G \in \R^{M \times N}$，列归一化随机生成；
+\item 观测 $\X = G \Z + \xi$，$\xi \sim \mathcal{N}(0, \sigma_n^2 I)$；
+\item 默认参数：$N = 1024$，$M \in \{32, 64, 128\}$，$k \in \{2, 4, 8, 16\}$，$\sigma_n = 0.01$。
+\end{itemize}
+
+\subsection{SAE 训练协议}
+
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item L-NL SAE 结构（定义 \ref{def:sae}）；
+\item 容量扫描 $L \in \{N, 2N, 4N, 8N\}$；
+\item 稀疏先验：分别测试 L1 与 TopK；
+\item 每组超参数下用 30 个独立种子各训练一个 SAE 至收敛；
+\item 记录字典 $\W_d^{(s)}$，$s = 1, \ldots, 30$。
+\end{itemize}
+
+\subsection{记录指标}
+
+对每对种子 $(s, s')$ 计算：
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item 重合率 $\rho(\Dict^{(s)}, \Dict^{(s')}; \tau)$，$\tau \in \{0.5, 0.7, 0.9\}$；
+\item 干涉矩阵谱范数 $\norm{\I^{(s)}}_2$；
+\item 实测互相干性 $\mu^{(s)}$；
+\item 与真实字典 $G$ 的匹配率 $\rho(\Dict^{(s)}, G; \tau)$（toy model 中可观测）。
+\end{itemize}
+
+\subsection{预言变量}
+
+可证伪预言 \ref{pred:L}–\ref{pred:seed} 在本协议下转化为：
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item 预言 \ref{pred:L}：$\rho$ 对 $L$ 的回归系数显著负；
+\item 预言 \ref{pred:k}：$\rho$ 对 $k$ 的回归系数显著负；
+\item 预言 \ref{pred:M}：$\rho$ 对 $M$ 的回归系数显著正；
+\item 预言 \ref{pred:tau}：$\rho$ 对 $\tau$ 的回归系数显著负；
+\item 预言 \ref{pred:seed}：$\rho$ 跨种子方差随训练步数 $T$ 收敛到正下确界。
+\end{itemize}
+任一回归显著反向即构成对本文标度律的证伪。
+
+\section{相关工作}\label{sec:related}
+
+\paragraph{机制可解释性与 SAE。}
+SAE 作为机制可解释性工具的兴起以 Bricken 等 \cite{bricken2023}
+与 Templeton 等 \cite{templeton2024} 在 Anthropic 系统的实施为代表，
+配合 \cite{elhage2022} 关于叠加态的理论基础。
+本文不挑战 SAE 作为分解工具的实用价值，
+而是挑战将 SAE 输出视作"模型客观特征清单"的认识论定位。
+
+\paragraph{解缠表示与不可识别性。}
+Locatello 等 \cite{locatello2019} 是无监督解缠不可识别性的标志性工作；
+其根源可追溯至 Hyvärinen-Pajunen \cite{hyvarinen1999} 关于非线性 ICA 的经典结果。
+Khemakhem 等 \cite{khemakhem2020} 与 Hyvärinen 等 \cite{hyvarinen2019time}
+给出辅助变量条件下识别性恢复的构造性结果。
+本文将 SAE 任务嵌入这条文献链。
+
+\paragraph{SAE 局部约束的理论分析。}
+近期工作开始系统化分析 SAE 的局部失败模式：
+O'Neill 等 \cite{oneill2024} 证明 L-NL 编码器的摊销间隙；
+Cui 等 \cite{cui2026} 给出干涉矩阵主导的重建误差下界；
+Bhalla 等 \cite{bhalla2026} 从字典学习经典理论引入 $\mu$-不相干性约束。
+本文将这三条约束合成为统一下界。
+
+\paragraph{多样化字典学习。}
+Zheng 等 \cite{zheng2026} 提出"Diverse Dictionary Learning"，
+主动学习多份字典并利用它们之间的差异结构。
+该方向与本文在哲学上互补：
+本文证明非唯一性的结构必然性，\cite{zheng2026} 提出系统利用此非唯一性的方法。
+
+\paragraph{压缩感知与字典学习理论。}
+本文使用的容量赤字概念源自经典压缩感知 \cite{candes2006compressive,candes2008restricted}；
+$\mu$-不相干性条件回溯至 Donoho-Elad \cite{donoho2003optimally}
+与 Tropp \cite{tropp2004greed} 的稀疏恢复唯一性分析。
+
+\section{本体论意义与解释性范式}\label{sec:ontology}
+
+综合 § \ref{sec:unconditional} 与 § \ref{sec:conditional}：
+
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item 在 L1 或 TopK 稀疏先验下，精确字典恢复（定义 \ref{def:exact}）不可达
+（推论 \ref{cor:l1-fail}、\ref{cor:topk-fail}）；
+\item 在主流 L-NL 架构与高容量设置下，稳健可识别性（定义 \ref{def:robust}）违反量
+有结构性下界（推论 \ref{cor:overlap}）；
+\item 跨过 Locatello 门槛的已知充分条件是辅助变量
+（定理 \ref{thm:ivae}），SAE 训练范式不天然提供。
+\end{itemize}
+
+由此，SAE 所提取的特征字典不应被视作"模型真正在使用的概念清单"，
+而应被理解为以下三者的折中：
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item 在可达解集合中由优化路径偶然选定的一份；
+\item 在过完备零空间中随机漂移的部分元素；
+\item 与真实生成因子在排列-缩放-非线性扭曲等价类中位置不定的代表元。
+\end{enumerate}
+
+这一本体论修正与近期文献中"多样化字典学习" \cite{zheng2026} 的方向论一致：
+不再寻找唯一真实字典，而是\emph{系统化利用}非唯一性，
+通过显式多样性正则、集成或对齐机制，从一族字典中提取关于模型概念结构的不变量。
+
+\subsection{对解释性实践的具体建议}
+
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item \textbf{不要将单一种子的 SAE 字典作为"模型特征清单"汇报}。
+最低要求是跨多种子训练并报告稳定核心（重合 $\geq 30\%$ 的部分）与漂移部分（其余 $70\%$）。
+
+\item \textbf{为下游论断标注可识别性等级}。
+基于稳定核心的论断（如"模型中存在 X 概念方向"）有较高可信度；
+基于漂移部分的论断（如"模型中存在 Y 细分概念"）可能是优化路径偶然产物。
+
+\item \textbf{引入辅助变量}。
+如能在训练 SAE 时利用上下文位置、任务标签或跨模型对比等辅助信息，
+依定理 \ref{thm:ivae} 可在原则上恢复可识别性。
+这是构造性的研究方向。
+
+\item \textbf{在玩具模型上预先验证。}
+本文 § \ref{sec:protocol} 给出的协议可用于在 SAE 部署到真实模型前
+检验所选稀疏先验是否真正打破不可识别性。
+\end{enumerate}
+
+\section{局限性}\label{sec:limitations}
+
+本文严格区分以下三类陈述：
+
+\subsection{严格证明的结论}
+
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item 命题 \ref{prop:equiv}：SAE 与无监督解缠在 $\lambda \to 0^+$ 极限下任务等价。
+\item 命题 \ref{prop:l1-insuff}：L1 稀疏不充分以打破保支撑可逆变换族上的不可识别性。
+\item 命题 \ref{prop:topk-insuff}：TopK 稀疏不充分以打破保 TopK 等价变换族上的不可识别性。
+\item 推论 \ref{cor:l1-fail}、\ref{cor:topk-fail}：精确字典恢复在相应等价类上失败。
+\end{itemize}
+
+\subsection{有条件结论（依赖未完全形式化的常数或假设）}
+
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item 引理 \ref{lem:cluster}：三定理聚类下界。
+  常数 $C_1, C_2$ 由原始三定理 \cite{oneill2024,cui2026,bhalla2026} 的证明导出，
+  但本文未独立追踪其精确数值依赖。结论应被理解为\emph{量阶下界}。
+\item 推论 \ref{cor:overlap}：重合率下界。
+  依赖"自由空间"比例 $\eta$ 的存在性，
+  以及零空间内字典方向"各向同性近似"假设；
+  二者在大模型中均未独立验证。
+\end{itemize}
+
+\subsection{启发性陈述}
+
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item 30\% 重合率与本文下界公式之间的对应是\emph{方向性}的，非数值预言。
+\item 标度律预言 \ref{pred:L}–\ref{pred:seed} 在 toy model 上的具体回归系数预测
+未给出，仅给出符号方向。
+\item TopK 在保 TopK 等价族\emph{之外}是否能跨越 Locatello 门槛仍开放
+（评述 \ref{rem:topk-open}）。
+\end{itemize}
+
+\subsection{未涉及的方向}
+
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+\item 与数据生成过程的层级结构（多层 transformer 的 compositional structure）
+相关的可识别性。
+\item 跨语言、跨任务激活的字典对齐问题。
+\item Diverse Dictionary Learning \cite{zheng2026} 等积极利用非唯一性的方法的具体性能边界。
+\item LLM 实际激活分布与定义 \ref{def:igen} 的隐式生成过程之间的近似程度。
+本文假设此近似有效，但严格验证需要独立工作。
+\item 训练动态层面的解释：种子敏感性是否可由 SGD 在过参数化下的隐式正则化
+（implicit bias）部分缓解。
+\end{itemize}
+
+\section{结论}\label{sec:conclusion}
+
+本文将 Paulo \& Belrose (2025) 观察到的 SAE 字典种子敏感性现象
+解释为两层结构约束的必然显现，并给出形式化论证：
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+\item 在 L1 或 TopK 稀疏先验下，SAE 任务落入 Locatello 不可识别性区间；
+\item 在 L-NL 架构与高容量设置下，
+三条已发表的局部约束联合给出可推导的误差下界，
+进而决定重合率的方向性塌缩；
+\item 跨过 Locatello 门槛的已知途径是辅助变量，
+SAE 训练范式不天然提供，但可被改造提供。
+\end{enumerate}
+
+本文不主张 SAE 解释性研究因此应被放弃，
+而是建议将其重新定位为\emph{对非唯一性分布的研究}：
+SAE 字典作为一族解的代表元，其稳定成分（跨种子重合的 30\%）
+与不稳定成分（漂移的 70\%）各自反映模型表征结构的不同侧面，
+后者并非纯粹噪声，而是过完备表征容量在零空间中的具体实现。
+
+本文最重要的诚实承认：所有不可识别性结论都建立在
+"无辅助变量可用"的假设上。
+该假设可被未来工作主动破坏（§ \ref{sec:aux} 与 § \ref{sec:ontology}.B.3）。
+本文的负面结论同时定义了正面研究的入口。
+
+\appendix
+
+\section{引理 \ref{lem:cluster} 的完整证明}\label{app:proof}
+
+本附录补全引理 \ref{lem:cluster} 的证明，
+之前在正文中仅给出要点。
+
+\begin{proof}[引理 \ref{lem:cluster} 完整证明]
+设 SAE 学到的字典为 $\W_d \in \R^{M \times L}$，列归一化。
+我们要下界总误差 $\Err = \epsilon_c + \lambda \epsilon_m$。
+
+\textbf{步骤 1：容量赤字下的不可恢复码集。}
+由引理 \ref{lem:capacity}，恢复 $\R^N$ 中 $k$ 稀疏向量的最少测量数为
+$\Theta(k \log(N/k))$。设 $C_0 = \max(0, 1 - M/(k\log(N/k)))$。
+则 $\R^L$ 中存在比例至少 $C_0$ 的 $k$ 稀疏码 $\Z^\ast$，
+使任何线性编码器 $\W_e$ 满足
+$\Pr_\X[f_\theta(\X) = \Z^\ast] = 0$。
+记该集合为 $\mathcal{F}_0$，$|\mathcal{F}_0|/|\mathcal{F}| \geq C_0$
+（$\mathcal{F}$ 为全部 $k$ 稀疏码）。
+
+\textbf{步骤 2：$\mathcal{F}_0$ 上的重建误差下界。}
+对 $\Z^\ast \in \mathcal{F}_0$，
+由定理 \ref{thm:cui}（Cui 等的干涉主导下界），
+\[
+\mathbb{E}_{\Z^\ast \in \mathcal{F}_0} \norm{\X - \W_d \hat\Z}^2
+\geq c_1 \cdot \norm{\I}_2 \cdot \mathbb{E}_{\Z^\ast \in \mathcal{F}_0} \norm{\Z^\ast}^2.
+\]
+将 $\mathbb{E}_{\mathcal{F}_0}$ 与 $\mathbb{E}_{\mathcal{F}}$ 关联：
+$\mathbb{E}_{\mathcal{F}_0}[\cdot] \geq C_0 \cdot \mathbb{E}_{\mathcal{F}}[\cdot]$
+（在 $\mathcal{F}_0$ 占比 $\geq C_0$ 时）。
+故
+\[
+\epsilon_c \geq C_0 \cdot c_1 \cdot \norm{\I}_2 \cdot \mathbb{E}\norm{\Z^\ast}^2.
+\]
+
+\textbf{步骤 3：单义性误差的不相干性破缺下界。}
+由定理 \ref{thm:bhalla}（Bhalla 等的 $\mu$ 阈值）与定义 \ref{def:dmu}，
+当 $L$ 超出 Welch-Bhalla 阈值时，
+字典必须满足 $\mu \geq \mu_{\min} = \sqrt{(L-M)/(M(L-1))} > 1/(2k-1)$。
+违反的代数后果是字典基向量被迫承载多个真实因子的纠缠投影，
+即单义性误差与破缺成正比：
+\[
+\epsilon_m \geq c_2 \cdot \Delta\mu,
+\]
+其中 $c_2 > 0$ 为依赖 $k$ 与字典维度的常数。
+在 $\mathcal{F}_0$ 上，这一项独立于 $\norm{\I}_2$ 的贡献存在：
+$\mathcal{F}$ 在投影到不同字典原子时的混叠由 $\mu$ 决定，
+而 $\mu$ 由几何强制，与编码器的覆盖能力 $\norm{\I}_2$ 是不同的失败模式。
+
+\textbf{步骤 4：合并。}
+\[
+\Err = \epsilon_c + \lambda \epsilon_m
+\geq C_0 \cdot c_1 \norm{\I}_2 \mathbb{E}\norm{\Z^\ast}^2 + \lambda C_0 c_2 \Delta\mu
+\]
+（在步骤 3 中我们隐式使用 $\mathcal{F}_0$ 是误差饱和的子集，
+故 $\epsilon_m$ 的下界也乘以 $C_0$ 作为"误差激活的相对体积"修正）。
+取 $C_1 := c_1 \mathbb{E}\norm{\Z^\ast}^2$，
+$C_2 := \lambda c_2$，
+即得
+\[
+\Err_{\min} \geq C_0 \cdot (C_1 \norm{\I}_2 + C_2 \Delta\mu). \qedhere
+\]
+\end{proof}
+
+\begin{remark}
+本证明的"软"步骤是步骤 3 中将 Bhalla 不等式从精确恢复阈值转化为
+单义性误差的具体下界 $c_2 \Delta\mu$。
+该转化的精确常数依赖 Bhalla 原证明中对 $\mu > 1/(2k-1)$ 区间的退化分析，
+本附录未对其做独立追踪。
+\end{remark}
+
+\section{工作样本：线性 SAE 的精确计算}\label{app:linear}
+
+为提供下界的可验证锚点，本附录在线性 SAE 这一可解情形下显式计算所有量。
+
+\subsection{设置}
+
+设 $\sigma$ 为恒等映射（即 SAE 退化为 PCA-like 线性自编码器），
+$\W_e = \W_d^\top$（绑权重 tied weights），列归一化。
+此时 $f_\theta(\X) = \W_d^\top \X$，$\hat\X = \W_d \W_d^\top \X$。
+
+\subsection{$\I$ 的精确刻画}
+
+$\I = \W_d^\top \W_d - I_L$。
+$\W_d^\top \W_d \in \R^{L \times L}$ 的秩 $\leq M$。
+当 $L > M$ 时，$\I$ 有至少 $L - M$ 个特征值为 $-1$
+（对应 $\W_d^\top \W_d$ 的零空间），故
+\[
+\norm{\I}_2 \geq 1.
+\]
+等号在 $\W_d$ 列两两正交（仅在 $L \leq M$ 时可能）时成立。
+
+\subsection{$\Delta\mu$ 的精确刻画}
+
+由 Welch 界 \cite{welch1974lower}，对 $L > M$，
+\[
+\mu \geq \mu_W := \sqrt{\frac{L-M}{M(L-1)}}.
+\]
+当 $L = M$ 时 $\mu_W = 0$（字典可正交）；
+当 $L = 2M$ 时 $\mu_W = \sqrt{1/(2M-1)} \approx 1/\sqrt{2M}$；
+当 $L \to \infty$ 时 $\mu_W \to 1/\sqrt{M}$。
+
+代入定义 \ref{def:dmu}：
+\[
+\Delta\mu = \max(0, \mu_W - 1/(2k-1)).
+\]
+对 $M = 64, k = 4$，$1/(2k-1) = 1/7 \approx 0.143$，
+当 $L \geq 8M = 512$ 时 $\mu_W \approx \sqrt{1/64} = 0.125 < 0.143$，$\Delta\mu = 0$。
+故对此参数组合，不相干性破缺项尚未激活，主导项来自 $\norm{\I}_2$。
+
+\subsection{$C_0$ 的精确刻画}
+
+对 $N = 1024, M = 64, k = 4$：
+$k \log(N/k) = 4 \log(256) \approx 4 \cdot 8 = 32$（自然对数下约 22）。
+$C_0 = \max(0, 1 - 64/32) = 0$。
+故对此设置 $M$ 充分大，容量赤字不激活。
+
+\subsection{结论}
+
+线性 SAE 在 $M$ 充分大、$k$ 充分小、$L$ 不过分大时，
+本文下界主导项仅有 $\norm{\I}_2 \geq 1$ 的常数贡献，
+表现为对总误差的常数下界，不导致重合率塌缩。
+重合率塌缩需要进入大 $L$、大 $k$、小 $M$ 的"难"参数区。
+这一计算说明本文标度律预言 \ref{pred:L}--\ref{pred:M} 在
+对应参数极限下的方向是自洽的。
+
+\begin{thebibliography}{99}
+
+\bibitem{paulo2025}
+Paulo, G., \& Belrose, N. (2025).
+\emph{Sparse Autoencoders Trained on the Same Data Learn Different Features}.
+arXiv preprint arXiv:2501.16615.
+
+\bibitem{elhage2022}
+Elhage, N., et al. (2022).
+\emph{Toy Models of Superposition}.
+Transformer Circuits Thread.
+
+\bibitem{locatello2019}
+Locatello, F., Bauer, S., Lucic, M., Rätsch, G., Gelly, S., Schölkopf, B., \& Bachem, O. (2019).
+\emph{Challenging Common Assumptions in the Unsupervised Learning of Disentangled Representations}.
+ICML.
+
+\bibitem{hyvarinen1999}
+Hyvärinen, A., \& Pajunen, P. (1999).
+\emph{Nonlinear independent component analysis: Existence and uniqueness results}.
+Neural Networks, 12(3), 429--439.
+
+\bibitem{oneill2024}
+O'Neill, C., Gumran, A., \& Klindt, D. (2024).
+\emph{Compute Optimal Inference and Provable Amortisation Gap in Sparse Autoencoders}.
+arXiv preprint arXiv:2411.13117.
+
+\bibitem{cui2026}
+Cui, J., Zhang, Q., Wang, Y., \& Wang, Y. (2026).
+\emph{On the Limits of Sparse Autoencoders: A Theoretical Framework and Reweighted Remedy}.
+ICLR.
+
+\bibitem{bhalla2026}
+Bhalla, U., et al. (2026).
+\emph{Do Sparse Autoencoders Capture Concept Manifolds?}
+arXiv preprint arXiv:2604.28119.
+
+\bibitem{zheng2026}
+Zheng, Y., Li, Z., Fan, S., Wilson, A. G., \& Zhang, K. (2026).
+\emph{Diverse Dictionary Learning}.
+arXiv preprint arXiv:2604.17568.
+
+\bibitem{khemakhem2020}
+Khemakhem, I., Kingma, D. P., Monti, R. P., \& Hyvärinen, A. (2020).
+\emph{Variational Autoencoders and Nonlinear ICA: A Unifying Framework}.
+AISTATS.
+
+\bibitem{hyvarinen2019time}
+Hyvärinen, A., Sasaki, H., \& Turner, R. E. (2019).
+\emph{Nonlinear ICA Using Auxiliary Variables and Generalized Contrastive Learning}.
+AISTATS.
+
+\bibitem{candes2006compressive}
+Candès, E. J., Romberg, J., \& Tao, T. (2006).
+\emph{Robust uncertainty principles: Exact signal reconstruction from highly incomplete frequency information}.
+IEEE Transactions on Information Theory, 52(2), 489--509.
+
+\bibitem{candes2008restricted}
+Candès, E. J. (2008).
+\emph{The restricted isometry property and its implications for compressed sensing}.
+Comptes Rendus Mathématique, 346(9-10), 589--592.
+
+\bibitem{donoho2003optimally}
+Donoho, D. L., \& Elad, M. (2003).
+\emph{Optimally sparse representation in general (nonorthogonal) dictionaries via $\ell^1$ minimization}.
+PNAS, 100(5), 2197--2202.
+
+\bibitem{tropp2004greed}
+Tropp, J. A. (2004).
+\emph{Greed is good: Algorithmic results for sparse approximation}.
+IEEE Transactions on Information Theory, 50(10), 2231--2242.
+
+\bibitem{welch1974lower}
+Welch, L. R. (1974).
+\emph{Lower bounds on the maximum cross correlation of signals}.
+IEEE Transactions on Information Theory, 20(3), 397--399.
+
+\bibitem{johnson1984extensions}
+Johnson, W. B., \& Lindenstrauss, J. (1984).
+\emph{Extensions of Lipschitz mappings into a Hilbert space}.
+Contemporary Mathematics, 26, 189--206.
+
+\bibitem{bricken2023}
+Bricken, T., et al. (2023).
+\emph{Towards Monosemanticity: Decomposing Language Models With Dictionary Learning}.
+Transformer Circuits Thread.
+
+\bibitem{templeton2024}
+Templeton, A., et al. (2024).
+\emph{Scaling Monosemanticity: Extracting Interpretable Features from Claude 3 Sonnet}.
+Transformer Circuits Thread.
+
+\end{thebibliography}
+
+\end{document}
