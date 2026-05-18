@@ -100,7 +100,9 @@ def _field_val(parsed, field):
     if field == "human_review":
         return parsed.get("hr_f")
     if field == "integrity":
-        return parsed.get("ig")
+        return parsed.get("ig") or parsed.get("integrity")
+    if field in ("mk_f", "hr_f"):
+        return parsed.get(field)
     v = parsed.get(field)
     if v is not None:
         try:
@@ -154,6 +156,8 @@ def eval_config(parsed, config):
         rejected = False
     if rejected and config.get("rescue_rules"):
         for r in config["rescue_rules"]:
+            if not r.get("enabled", True):
+                continue
             if eval_rule(parsed, r, keep_na):
                 rejected = False
                 break

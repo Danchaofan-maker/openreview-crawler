@@ -46,32 +46,32 @@ def _eval_cond(p, c):
     if op == "eq":  return v == th
     if op == "neq": return v != th
     if op == "in":  return v in (th if isinstance(th, list) else [th])
-    return None
+    return False
 
-def _eval_rule(p, rule):
+def _eval_rule(p, rule, keep_na=True):
     results = [_eval_cond(p, c) for c in rule.get("conditions", [])]
     logic = rule.get("internal_logic", "AND")
-    if logic == "AND":
-        # None = field missing = condition not satisfied = breaks AND
-        resolved = [False if r is None else r for r in results]
-    else:
-        # OR: None = field missing = doesn't contribute
-        resolved = [r for r in results if r is not None]
+    # None = field missing. keep_na=True means missing fields do not match;
+    # keep_na=False means missing fields match, matching serve.py semantics.
+    resolved = [not keep_na if r is None else r for r in results]
     if not resolved: return False
     hit = all(resolved) if logic == "AND" else any(resolved)
     return (not hit) if rule.get("negate") else hit
 
 def apply_rules(papers, cfg):
-    excl_rules   = cfg.get("rules", [])
-    rescue_rules = cfg.get("rescue_rules", [])
+    excl_rules   = [r for r in cfg.get("rules", []) if r.get("enabled", True)]
+    rescue_rules = [r for r in cfg.get("rescue_rules", []) if r.get("enabled", True)]
+    keep_na = cfg.get("keep_na", True)
+    inter_logic = cfg.get("inter_logic", "OR")
     kept = []
     for p in papers:
-        excluded = any(_eval_rule(p, r) for r in excl_rules)
+        hits = [_eval_rule(p, r, keep_na) for r in excl_rules]
+        excluded = (all(hits) if inter_logic == "AND" else any(hits)) if hits else False
         if cfg.get("force_keep_hr") and p.get("hr_f"):
             excluded = False
         if excluded:
             for r in rescue_rules:
-                if _eval_rule(p, r):
+                if _eval_rule(p, r, keep_na):
                     excluded = False
                     break
         if not excluded:

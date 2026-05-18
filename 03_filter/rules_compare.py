@@ -16,6 +16,7 @@ SCORE_FIELDS = {
 }
 BOOL_FIELDS = {"marketing": "marketing_detected", "human_review": "human_review_required"}
 ENUM_FIELDS = {"integrity": ["intact", "partial", "broken", "absent"]}
+FIELD_ALIASES = {"mk_f": "marketing", "hr_f": "human_review"}
 
 def _get_score(parsed, abbr, long_key):
     v = parsed.get(abbr)
@@ -26,6 +27,7 @@ def _get_score(parsed, abbr, long_key):
 
 def _get_flag(parsed, short, long_key):
     v = parsed.get(short)
+    if v is None: v = parsed.get(f"{short}_f")
     if v is None: v = parsed.get(long_key)
     if isinstance(v, bool): return v
     if isinstance(v, dict): return v.get("f") if "f" in v else v.get("flag")
@@ -43,6 +45,8 @@ def load_data():
     records = []
     for l in lines:
         r = json.loads(l)
+        if not r.get("ok"):
+            continue
         parsed = r.get("parsed") or {}
         if not isinstance(parsed, dict): continue
         row = {"paper_id": r.get("paper_id"), "title": r.get("title", ""), "venue": r.get("venue", ""), "fuse": parsed.get("fuse")}
@@ -60,36 +64,41 @@ N_TOTAL = 30983
 # ── 规则求值 ─────────────────────────────────────────────────
 def eval_cond(df, c):
     f, op, v = c["field"], c["op"], c["value"]
+    f = FIELD_ALIASES.get(f, f)
+    if f not in df.columns:
+        return pd.Series([False]*len(df))
     col = df[f]
     if op == "lt":  return col.fillna(999)  < v
     if op == "lte": return col.fillna(999)  <= v
     if op == "gt":  return col.fillna(-999) > v
     if op == "gte": return col.fillna(-999) >= v
-    if op == "eq":  return col.fillna(object()) == v
-    if op == "neq": return col.fillna(object()) != v
+    if op == "eq":  return col.notna() & (col == v)
+    if op == "neq": return col.notna() & (col != v)
     if op == "in":  return col.isin(v if isinstance(v, list) else [v])
     return pd.Series([False]*len(df))
 
 def eval_rule(df, rule):
-    masks = [eval_cond(df, c) for c in rule["conditions"]]
+    masks = [eval_cond(df, c) for c in rule.get("conditions", [])]
     if not masks: return pd.Series([False]*len(df))
     r = masks[0]
     for m in masks[1:]:
-        r = (r & m) if rule["internal_logic"] == "AND" else (r | m)
+        r = (r & m) if rule.get("internal_logic", "AND") == "AND" else (r | m)
     return ~r if rule.get("negate") else r
 
 def eval_config(df, config):
-    active = [r for r in config["rules"] if r["enabled"]]
+    active = [r for r in config.get("rules", []) if r.get("enabled", True)]
     if not active: return pd.Series([False]*len(df))
     hits = [eval_rule(df, r) for r in active]
     fused = hits[0]
     for h in hits[1:]:
-        fused = (fused & h) if config["inter_logic"] == "AND" else (fused | h)
+        fused = (fused & h) if config.get("inter_logic", "OR") == "AND" else (fused | h)
     if config.get("force_keep_hr"):
         fused &= ~(df["human_review"].fillna(False) == True)
     if config.get("rescue_rules"):
         rescue = pd.Series([False] * len(df))
         for r in config["rescue_rules"]:
+            if not r.get("enabled", True):
+                continue
             rescue |= eval_rule(df, r)
         fused &= ~rescue
     return fused
@@ -131,13 +140,13 @@ st.subheader("规则明细")
 detail_cols = st.columns(len(configs))
 for i, (key, cfg) in enumerate(configs.items()):
     with detail_cols[i]:
-        st.markdown(f"**{LABELS[key]}** · 规则间: `{cfg['inter_logic']}`")
+        st.markdown(f"**{LABELS[key]}** · 规则间: `{cfg.get('inter_logic', 'OR')}`")
         for rule in cfg["rules"]:
-            if not rule["enabled"]: continue
+            if not rule.get("enabled", True): continue
             cond_strs = []
             for c in rule["conditions"]:
                 cond_strs.append(f"`{c['field']} {c['op']} {c['value']}`")
-            logic = f" **{rule['internal_logic']}** ".join(cond_strs)
+            logic = f" **{rule.get('internal_logic', 'AND')}** ".join(cond_strs)
             neg = " ~~取反~~" if rule.get("negate") else ""
             hit = eval_rule(df, rule).sum()
             st.markdown(f"- **{rule['name']}**{neg} → {hit}篇  \n  {logic}")
