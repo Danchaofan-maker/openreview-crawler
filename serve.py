@@ -66,10 +66,9 @@ def load():
 
     # Load preset rule files
     preset_files = {
-        "jes":        "rules_jes.json",
+        "claude":     "rules_claude.json",
         "danchaofan": "rules_danchaofan.json",
-        "insight_v1": "rules_insight_v1.json",
-        "default":    "rules.json",
+        "jes":        "rules_jes.json",
     }
     for key, fname in preset_files.items():
         p = EXPLORE_DIR / fname

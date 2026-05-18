@@ -1,0 +1,803 @@
+{
+  "mr": {
+    "shape": "bimodal",
+    "count": 30642,
+    "mean": 3.3703,
+    "median": 2.5,
+    "std": 2.501,
+    "skewness": 0.455,
+    "excess_kurtosis": -1.1154,
+    "percentiles": {
+      "p10": 0.5,
+      "p25": 1.0,
+      "p50": 2.5,
+      "p75": 5.5,
+      "p85": 7.0,
+      "p90": 7.0
+    },
+    "dip_test_d": 0.076741,
+    "dip_test_p": 0.0,
+    "gmm_components": [
+      {
+        "mean": 1.6109,
+        "std": 1.0447,
+        "weight": 0.6126
+      },
+      {
+        "mean": 6.1529,
+        "std": 1.3349,
+        "weight": 0.3874
+      }
+    ],
+    "gmm_valley": 3.9939,
+    "gmm_separation_sigma": 3.7894,
+    "recommended_threshold": 3.9939,
+    "threshold_method": "gmm_valley",
+    "reason": "dip test rejects unimodality and GMM components are well separated"
+  },
+  "tn": {
+    "shape": "bimodal",
+    "count": 30640,
+    "mean": 4.1282,
+    "median": 4.0,
+    "std": 2.0001,
+    "skewness": -0.0206,
+    "excess_kurtosis": -0.5728,
+    "percentiles": {
+      "p10": 2.0,
+      "p25": 3.0,
+      "p50": 4.0,
+      "p75": 5.5,
+      "p85": 6.5,
+      "p90": 7.0
+    },
+    "dip_test_d": 0.078443,
+    "dip_test_p": 0.0,
+    "gmm_components": [
+      {
+        "mean": 2.4664,
+        "std": 1.3434,
+        "weight": 0.4064
+      },
+      {
+        "mean": 5.2658,
+        "std": 1.5226,
+        "weight": 0.5936
+      }
+    ],
+    "gmm_valley": 2.4664,
+    "gmm_separation_sigma": 1.9496,
+    "recommended_threshold": 2.4664,
+    "threshold_method": "gmm_valley",
+    "reason": "dip test rejects unimodality and GMM components are well separated"
+  },
+  "md": {
+    "shape": "bimodal",
+    "count": 30641,
+    "mean": 2.4931,
+    "median": 2.0,
+    "std": 1.9787,
+    "skewness": 0.5998,
+    "excess_kurtosis": -0.5449,
+    "percentiles": {
+      "p10": 0.0,
+      "p25": 1.0,
+      "p50": 2.0,
+      "p75": 4.0,
+      "p85": 5.0,
+      "p90": 5.0
+    },
+    "dip_test_d": 0.074394,
+    "dip_test_p": 0.0,
+    "gmm_components": [
+      {
+        "mean": 0.9189,
+        "std": 0.7545,
+        "weight": 0.4885
+      },
+      {
+        "mean": 3.9965,
+        "std": 1.5759,
+        "weight": 0.5115
+      }
+    ],
+    "gmm_valley": 2.7142,
+    "gmm_separation_sigma": 2.491,
+    "recommended_threshold": 2.7142,
+    "threshold_method": "gmm_valley",
+    "reason": "dip test rejects unimodality and GMM components are well separated"
+  },
+  "ar": {
+    "shape": "bimodal",
+    "count": 30169,
+    "mean": 4.3831,
+    "median": 5.0,
+    "std": 2.0934,
+    "skewness": -0.4202,
+    "excess_kurtosis": 0.193,
+    "percentiles": {
+      "p10": 1.0,
+      "p25": 3.0,
+      "p50": 5.0,
+      "p75": 6.0,
+      "p85": 6.0,
+      "p90": 7.0
+    },
+    "dip_test_d": 0.085004,
+    "dip_test_p": 0.0,
+    "gmm_components": [
+      {
+        "mean": 0.1839,
+        "std": 0.3778,
+        "weight": 0.1081
+      },
+      {
+        "mean": 4.8923,
+        "std": 1.5807,
+        "weight": 0.8919
+      }
+    ],
+    "gmm_valley": 1.2009,
+    "gmm_separation_sigma": 4.097,
+    "recommended_threshold": 1.2009,
+    "threshold_method": "gmm_valley",
+    "reason": "dip test rejects unimodality and GMM components are well separated"
+  },
+  "er": {
+    "shape": "bimodal",
+    "count": 30636,
+    "mean": 6.267,
+    "median": 7.0,
+    "std": 2.1451,
+    "skewness": -0.7038,
+    "excess_kurtosis": 0.2948,
+    "percentiles": {
+      "p10": 3.5,
+      "p25": 5.0,
+      "p50": 7.0,
+      "p75": 8.0,
+      "p85": 8.0,
+      "p90": 9.0
+    },
+    "dip_test_d": 0.085879,
+    "dip_test_p": 0.0,
+    "gmm_components": [
+      {
+        "mean": 4.9524,
+        "std": 2.0453,
+        "weight": 0.5096
+      },
+      {
+        "mean": 7.633,
+        "std": 1.1723,
+        "weight": 0.4904
+      }
+    ],
+    "gmm_valley": 4.9524,
+    "gmm_separation_sigma": 1.6081,
+    "recommended_threshold": 4.9524,
+    "threshold_method": "gmm_valley",
+    "reason": "dip test rejects unimodality and GMM components are well separated"
+  },
+  "cc": {
+    "shape": "unimodal",
+    "count": 30634,
+    "mean": 3.2716,
+    "median": 3.0,
+    "std": 1.3965,
+    "skewness": 0.3854,
+    "excess_kurtosis": 1.8974,
+    "percentiles": {
+      "p10": 2.0,
+      "p25": 3.0,
+      "p50": 3.0,
+      "p75": 4.0,
+      "p85": 4.0,
+      "p90": 5.0
+    },
+    "dip_test_d": 0.11453,
+    "dip_test_p": 0.0,
+    "gmm_components": [
+      {
+        "mean": 3.2227,
+        "std": 0.788,
+        "weight": 0.6666
+      },
+      {
+        "mean": 3.3694,
+        "std": 2.1432,
+        "weight": 0.3334
+      }
+    ],
+    "gmm_valley": 3.3694,
+    "gmm_separation_sigma": 0.0909,
+    "recommended_threshold": 4.0,
+    "threshold_method": "p75_percentile",
+    "reason": "no confirmed bimodality; use a percentile cut if the dimension is needed"
+  },
+  "ei": {
+    "shape": "bimodal",
+    "count": 30643,
+    "mean": 2.651,
+    "median": 2.0,
+    "std": 2.4676,
+    "skewness": 1.0265,
+    "excess_kurtosis": -0.1345,
+    "percentiles": {
+      "p10": 0.0,
+      "p25": 1.0,
+      "p50": 2.0,
+      "p75": 3.5,
+      "p85": 6.0,
+      "p90": 7.0
+    },
+    "dip_test_d": 0.096009,
+    "dip_test_p": 0.0,
+    "gmm_components": [
+      {
+        "mean": 1.4882,
+        "std": 1.0894,
+        "weight": 0.784
+      },
+      {
+        "mean": 6.8704,
+        "std": 1.0803,
+        "weight": 0.216
+      }
+    ],
+    "gmm_valley": 4.5238,
+    "gmm_separation_sigma": 4.9612,
+    "recommended_threshold": 4.5238,
+    "threshold_method": "gmm_valley",
+    "reason": "dip test rejects unimodality and GMM components are well separated"
+  },
+  "sg": {
+    "shape": "bimodal",
+    "count": 30639,
+    "mean": 3.5138,
+    "median": 3.0,
+    "std": 2.0021,
+    "skewness": 0.4536,
+    "excess_kurtosis": -0.4308,
+    "percentiles": {
+      "p10": 1.0,
+      "p25": 2.0,
+      "p50": 3.0,
+      "p75": 5.0,
+      "p85": 6.0,
+      "p90": 6.0
+    },
+    "dip_test_d": 0.080763,
+    "dip_test_p": 0.0,
+    "gmm_components": [
+      {
+        "mean": 2.4397,
+        "std": 1.281,
+        "weight": 0.6611
+      },
+      {
+        "mean": 5.6089,
+        "std": 1.4094,
+        "weight": 0.3389
+      }
+    ],
+    "gmm_valley": 5.6089,
+    "gmm_separation_sigma": 2.3533,
+    "recommended_threshold": 5.6089,
+    "threshold_method": "gmm_valley",
+    "reason": "dip test rejects unimodality and GMM components are well separated"
+  },
+  "cs": {
+    "shape": "compressed_normal",
+    "count": 30644,
+    "mean": 6.8874,
+    "median": 7.0,
+    "std": 1.027,
+    "skewness": -0.5681,
+    "excess_kurtosis": 1.4574,
+    "percentiles": {
+      "p10": 6.0,
+      "p25": 6.0,
+      "p50": 7.0,
+      "p75": 8.0,
+      "p85": 8.0,
+      "p90": 8.0
+    },
+    "dip_test_d": 0.110707,
+    "dip_test_p": 0.0,
+    "gmm_components": [
+      {
+        "mean": 5.9769,
+        "std": 0.9973,
+        "weight": 0.2961
+      },
+      {
+        "mean": 7.2704,
+        "std": 0.7646,
+        "weight": 0.7039
+      }
+    ],
+    "gmm_valley": 5.9769,
+    "gmm_separation_sigma": 1.4556,
+    "recommended_threshold": null,
+    "threshold_method": "not_recommended",
+    "reason": "std=1.03, insufficient discriminative power"
+  },
+  "_meta": {
+    "input_path": "data/full/output.jsonl",
+    "valid_records": 30983,
+    "score_fields": [
+      "mr",
+      "tn",
+      "md",
+      "ar",
+      "er",
+      "cc",
+      "ei",
+      "sg",
+      "cs"
+    ],
+    "integrity_counts": {
+      "partial": 14834,
+      "absent": 11778,
+      "intact": 3193,
+      "broken": 1178
+    }
+  },
+  "_correlations": {
+    "pearson": {
+      "mr": {
+        "mr": 1.0,
+        "tn": 0.8233,
+        "md": 0.8961,
+        "ar": 0.2785,
+        "er": -0.8293,
+        "cc": -0.4183,
+        "ei": 0.5552,
+        "sg": 0.6593,
+        "cs": 0.1273
+      },
+      "tn": {
+        "mr": 0.8233,
+        "tn": 1.0,
+        "md": 0.8152,
+        "ar": 0.3486,
+        "er": -0.7404,
+        "cc": -0.3426,
+        "ei": 0.5288,
+        "sg": 0.6638,
+        "cs": 0.0533
+      },
+      "md": {
+        "mr": 0.8961,
+        "tn": 0.8152,
+        "md": 1.0,
+        "ar": 0.2597,
+        "er": -0.7739,
+        "cc": -0.362,
+        "ei": 0.5201,
+        "sg": 0.6408,
+        "cs": 0.0767
+      },
+      "ar": {
+        "mr": 0.2785,
+        "tn": 0.3486,
+        "md": 0.2597,
+        "ar": 1.0,
+        "er": -0.259,
+        "cc": -0.1521,
+        "ei": 0.2193,
+        "sg": 0.379,
+        "cs": 0.0285
+      },
+      "er": {
+        "mr": -0.8293,
+        "tn": -0.7404,
+        "md": -0.7739,
+        "ar": -0.259,
+        "er": 1.0,
+        "cc": 0.533,
+        "ei": -0.553,
+        "sg": -0.6211,
+        "cs": -0.0152
+      },
+      "cc": {
+        "mr": -0.4183,
+        "tn": -0.3426,
+        "md": -0.362,
+        "ar": -0.1521,
+        "er": 0.533,
+        "cc": 1.0,
+        "ei": -0.3974,
+        "sg": -0.3328,
+        "cs": -0.0133
+      },
+      "ei": {
+        "mr": 0.5552,
+        "tn": 0.5288,
+        "md": 0.5201,
+        "ar": 0.2193,
+        "er": -0.553,
+        "cc": -0.3974,
+        "ei": 1.0,
+        "sg": 0.6135,
+        "cs": 0.1929
+      },
+      "sg": {
+        "mr": 0.6593,
+        "tn": 0.6638,
+        "md": 0.6408,
+        "ar": 0.379,
+        "er": -0.6211,
+        "cc": -0.3328,
+        "ei": 0.6135,
+        "sg": 1.0,
+        "cs": 0.1591
+      },
+      "cs": {
+        "mr": 0.1273,
+        "tn": 0.0533,
+        "md": 0.0767,
+        "ar": 0.0285,
+        "er": -0.0152,
+        "cc": -0.0133,
+        "ei": 0.1929,
+        "sg": 0.1591,
+        "cs": 1.0
+      }
+    },
+    "spearman": {
+      "mr": {
+        "mr": 1.0,
+        "tn": 0.8344,
+        "md": 0.908,
+        "ar": 0.2494,
+        "er": -0.8471,
+        "cc": -0.3858,
+        "ei": 0.6233,
+        "sg": 0.6527,
+        "cs": 0.07
+      },
+      "tn": {
+        "mr": 0.8344,
+        "tn": 1.0,
+        "md": 0.83,
+        "ar": 0.2833,
+        "er": -0.7642,
+        "cc": -0.3215,
+        "ei": 0.6064,
+        "sg": 0.6783,
+        "cs": 0.0856
+      },
+      "md": {
+        "mr": 0.908,
+        "tn": 0.83,
+        "md": 1.0,
+        "ar": 0.2253,
+        "er": -0.8054,
+        "cc": -0.3279,
+        "ei": 0.5925,
+        "sg": 0.6362,
+        "cs": 0.0302
+      },
+      "ar": {
+        "mr": 0.2494,
+        "tn": 0.2833,
+        "md": 0.2253,
+        "ar": 1.0,
+        "er": -0.2279,
+        "cc": -0.1257,
+        "ei": 0.2246,
+        "sg": 0.3611,
+        "cs": 0.0697
+      },
+      "er": {
+        "mr": -0.8471,
+        "tn": -0.7642,
+        "md": -0.8054,
+        "ar": -0.2279,
+        "er": 1.0,
+        "cc": 0.4521,
+        "ei": -0.5967,
+        "sg": -0.627,
+        "cs": -0.0087
+      },
+      "cc": {
+        "mr": -0.3858,
+        "tn": -0.3215,
+        "md": -0.3279,
+        "ar": -0.1257,
+        "er": 0.4521,
+        "cc": 1.0,
+        "ei": -0.3608,
+        "sg": -0.3116,
+        "cs": -0.0427
+      },
+      "ei": {
+        "mr": 0.6233,
+        "tn": 0.6064,
+        "md": 0.5925,
+        "ar": 0.2246,
+        "er": -0.5967,
+        "cc": -0.3608,
+        "ei": 1.0,
+        "sg": 0.6427,
+        "cs": 0.14
+      },
+      "sg": {
+        "mr": 0.6527,
+        "tn": 0.6783,
+        "md": 0.6362,
+        "ar": 0.3611,
+        "er": -0.627,
+        "cc": -0.3116,
+        "ei": 0.6427,
+        "sg": 1.0,
+        "cs": 0.1563
+      },
+      "cs": {
+        "mr": 0.07,
+        "tn": 0.0856,
+        "md": 0.0302,
+        "ar": 0.0697,
+        "er": -0.0087,
+        "cc": -0.0427,
+        "ei": 0.14,
+        "sg": 0.1563,
+        "cs": 1.0
+      }
+    },
+    "highly_correlated_pairs": [
+      {
+        "fields": [
+          "mr",
+          "tn"
+        ],
+        "pearson": 0.8233,
+        "spearman": 0.8344
+      },
+      {
+        "fields": [
+          "mr",
+          "md"
+        ],
+        "pearson": 0.8961,
+        "spearman": 0.908
+      },
+      {
+        "fields": [
+          "mr",
+          "er"
+        ],
+        "pearson": -0.8293,
+        "spearman": -0.8471
+      },
+      {
+        "fields": [
+          "mr",
+          "ei"
+        ],
+        "pearson": 0.5552,
+        "spearman": 0.6233
+      },
+      {
+        "fields": [
+          "mr",
+          "sg"
+        ],
+        "pearson": 0.6593,
+        "spearman": 0.6527
+      },
+      {
+        "fields": [
+          "tn",
+          "md"
+        ],
+        "pearson": 0.8152,
+        "spearman": 0.83
+      },
+      {
+        "fields": [
+          "tn",
+          "er"
+        ],
+        "pearson": -0.7404,
+        "spearman": -0.7642
+      },
+      {
+        "fields": [
+          "tn",
+          "ei"
+        ],
+        "pearson": 0.5288,
+        "spearman": 0.6064
+      },
+      {
+        "fields": [
+          "tn",
+          "sg"
+        ],
+        "pearson": 0.6638,
+        "spearman": 0.6783
+      },
+      {
+        "fields": [
+          "md",
+          "er"
+        ],
+        "pearson": -0.7739,
+        "spearman": -0.8054
+      },
+      {
+        "fields": [
+          "md",
+          "sg"
+        ],
+        "pearson": 0.6408,
+        "spearman": 0.6362
+      },
+      {
+        "fields": [
+          "er",
+          "sg"
+        ],
+        "pearson": -0.6211,
+        "spearman": -0.627
+      },
+      {
+        "fields": [
+          "ei",
+          "sg"
+        ],
+        "pearson": 0.6135,
+        "spearman": 0.6427
+      }
+    ]
+  },
+  "_integrity_summary": {
+    "intact": {
+      "count": 3193,
+      "mr": {
+        "count": 3193,
+        "mean": 7.0557,
+        "median": 7.0
+      },
+      "tn": {
+        "count": 3193,
+        "mean": 6.5806,
+        "median": 7.0
+      },
+      "md": {
+        "count": 3193,
+        "mean": 5.1481,
+        "median": 5.0
+      },
+      "ar": {
+        "count": 3193,
+        "mean": 5.1699,
+        "median": 5.0
+      },
+      "er": {
+        "count": 3193,
+        "mean": 3.6223,
+        "median": 4.0
+      },
+      "cc": {
+        "count": 3193,
+        "mean": 2.2742,
+        "median": 2.0
+      },
+      "ei": {
+        "count": 3193,
+        "mean": 5.1932,
+        "median": 6.0
+      },
+      "sg": {
+        "count": 3193,
+        "mean": 5.7174,
+        "median": 6.0
+      },
+      "cs": {
+        "count": 3193,
+        "mean": 7.6215,
+        "median": 8.0
+      }
+    },
+    "partial": {
+      "count": 14834,
+      "mr": {
+        "count": 14834,
+        "mean": 4.4468,
+        "median": 4.5
+      },
+      "tn": {
+        "count": 14833,
+        "mean": 4.9553,
+        "median": 5.0
+      },
+      "md": {
+        "count": 14834,
+        "mean": 3.3332,
+        "median": 3.0
+      },
+      "ar": {
+        "count": 14829,
+        "mean": 4.7515,
+        "median": 5.0
+      },
+      "er": {
+        "count": 14833,
+        "mean": 5.4205,
+        "median": 6.0
+      },
+      "cc": {
+        "count": 14830,
+        "mean": 3.0703,
+        "median": 3.0
+      },
+      "ei": {
+        "count": 14833,
+        "mean": 3.1731,
+        "median": 2.0
+      },
+      "sg": {
+        "count": 14834,
+        "mean": 4.0856,
+        "median": 4.0
+      },
+      "cs": {
+        "count": 14834,
+        "mean": 6.6999,
+        "median": 7.0
+      }
+    },
+    "absent": {
+      "count": 11778,
+      "mr": {
+        "count": 11437,
+        "mean": 1.0871,
+        "median": 1.0
+      },
+      "tn": {
+        "count": 11436,
+        "mean": 2.43,
+        "median": 2.5
+      },
+      "md": {
+        "count": 11436,
+        "mean": 0.7592,
+        "median": 1.0
+      },
+      "ar": {
+        "count": 10974,
+        "mean": 3.658,
+        "median": 4.0
+      },
+      "er": {
+        "count": 11432,
+        "mean": 8.0035,
+        "median": 8.0
+      },
+      "cc": {
+        "count": 11433,
+        "mean": 3.7769,
+        "median": 4.0
+      },
+      "ei": {
+        "count": 11439,
+        "mean": 1.3592,
+        "median": 1.0
+      },
+      "sg": {
+        "count": 11434,
+        "mean": 2.2402,
+        "median": 2.0
+      },
+      "cs": {
+        "count": 11439,
+        "mean": 6.9691,
+        "median": 7.0
+      }
+    }
+  }
+}

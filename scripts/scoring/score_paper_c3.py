@@ -97,6 +97,13 @@ def validate_c3(parsed: dict) -> tuple[bool, list[str]]:
     if not isinstance(fuse, bool):
         errors.append(f"fuse={fuse!r} 不是 bool")
 
+    # 数值评分范围检查 [0, 10]
+    score_fields = ["mr", "tn", "md", "ar", "er", "tea", "cc", "ei", "sg", "cs"]
+    for sf in score_fields:
+        v = parsed.get(sf)
+        if v is not None and isinstance(v, (int, float)) and not (0 <= v <= 10):
+            errors.append(f"{sf}={v} 超出 [0,10] 范围")
+
     # rr 格式：自动修复，不拒绝
     if not isinstance(rr, list):
         errors.append(f"rr={rr!r} 不是 list")

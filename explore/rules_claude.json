@@ -1,0 +1,156 @@
+{
+  "inter_logic": "OR",
+  "force_keep_hr": true,
+  "rules": [
+    {
+      "id": "cl-r1",
+      "name": "逻辑链缺失或断裂",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "id": "cl-r1-c1",
+          "field": "integrity",
+          "op": "in",
+          "value": ["absent", "broken"]
+        }
+      ]
+    },
+    {
+      "id": "cl-r2",
+      "name": "数学严谨度地板",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "id": "cl-r2-c1",
+          "field": "mr",
+          "op": "lt",
+          "value": 3.0
+        }
+      ]
+    },
+    {
+      "id": "cl-r3",
+      "name": "理论新颖度入场券",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "id": "cl-r3-c1",
+          "field": "tn",
+          "op": "lt",
+          "value": 7.0
+        }
+      ]
+    },
+    {
+      "id": "cl-r4",
+      "name": "营销包装且新颖度不足",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "id": "cl-r4-c1",
+          "field": "marketing",
+          "op": "eq",
+          "value": true
+        },
+        {
+          "id": "cl-r4-c2",
+          "field": "tn",
+          "op": "lt",
+          "value": 6.0
+        }
+      ]
+    },
+    {
+      "id": "cl-r5",
+      "name": "partial 链需要极高严谨度背书",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "id": "cl-r5-c1",
+          "field": "integrity",
+          "op": "eq",
+          "value": "partial"
+        },
+        {
+          "id": "cl-r5-c2",
+          "field": "mr",
+          "op": "lt",
+          "value": 8.5
+        }
+      ]
+    },
+    {
+      "id": "cl-r6",
+      "name": "intact 链需要基础严谨度",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "id": "cl-r6-c1",
+          "field": "integrity",
+          "op": "eq",
+          "value": "intact"
+        },
+        {
+          "id": "cl-r6-c2",
+          "field": "mr",
+          "op": "lt",
+          "value": 6.0
+        }
+      ]
+    },
+    {
+      "id": "cl-r7",
+      "name": "理论-实验脱节（高实验依赖但咬合极差）",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "id": "cl-r7-c1",
+          "field": "er",
+          "op": "gte",
+          "value": 7.5
+        },
+        {
+          "id": "cl-r7-c2",
+          "field": "tea",
+          "op": "lt",
+          "value": 4.0
+        }
+      ]
+    },
+    {
+      "id": "cl-r8",
+      "name": "高算力门槛且迁移范围极窄",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "id": "cl-r8-c1",
+          "field": "cc",
+          "op": "gte",
+          "value": 8.0
+        },
+        {
+          "id": "cl-r8-c2",
+          "field": "sg",
+          "op": "lt",
+          "value": 3.0
+        }
+      ]
+    }
+  ]
+}
