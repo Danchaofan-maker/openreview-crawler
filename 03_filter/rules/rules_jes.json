@@ -2,17 +2,93 @@
   "inter_logic": "OR",
   "force_keep_hr": true,
   "keep_na": true,
+  "rescue_rules": [
+    {
+      "name": "救高严格度outlier",
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "mr", "op": "gte", "value": 7}
+      ]
+    },
+    {
+      "name": "救极端算力outlier：cc=10备注用",
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "cc", "op": "eq", "value": 10}
+      ]
+    },
+    {
+      "name": "救人类核验标记论文",
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "hr_f", "op": "eq", "value": true}
+      ]
+    },
+    {
+      "name": "救极高理论新意outlier",
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "tn", "op": "gte", "value": 9}
+      ]
+    },
+    {
+      "name": "救极高现实性+极高泛化性outlier",
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "ar", "op": "gte", "value": 9},
+        {"field": "sg", "op": "gte", "value": 9}
+      ]
+    }
+  ],
   "rules": [
     {
-      "name": "R1 极端benchmark论文：五维同时确认无骨架",
+      "name": "R1 无骨架论文：absent定义保证无任何形式化论断",
       "enabled": true,
       "internal_logic": "AND",
       "negate": false,
       "conditions": [
-        {"field": "integrity", "op": "eq",  "value": "absent"},
-        {"field": "tn",        "op": "lt",  "value": 3},
-        {"field": "md",        "op": "lt",  "value": 2},
-        {"field": "er",        "op": "gt",  "value": 7}
+        {"field": "integrity", "op": "eq", "value": "absent"}
+      ]
+    },
+    {
+      "name": "R2 数学营销论文：mk_f确认词汇空转",
+      "enabled": true,
+      "internal_logic": "AND",
+      "negate": false,
+      "conditions": [
+        {"field": "mk_f", "op": "eq",  "value": true},
+        {"field": "mr",   "op": "lte", "value": 3},
+        {"field": "er",   "op": "gte", "value": 5}
+      ]
+    },
+    {
+      "name": "R3 非完整理论论文：排除所有partial和broken",
+      "enabled": true,
+      "internal_logic": "AND",
+      "negate": false,
+      "conditions": [
+        {"field": "integrity", "op": "in", "value": ["partial", "broken"]}
+      ]
+    },
+    {
+      "name": "R4 平凡intact：推导完整但贡献平凡且数学浅",
+      "enabled": true,
+      "internal_logic": "AND",
+      "negate": false,
+      "conditions": [
+        {"field": "integrity", "op": "eq",  "value": "intact"},
+        {"field": "tn",        "op": "lte", "value": 3},
+        {"field": "md",        "op": "lte", "value": 2}
+      ]
+    },
+    {
+      "name": "R5 实验主导intact：推导完整但实验占满全文",
+      "enabled": true,
+      "internal_logic": "AND",
+      "negate": false,
+      "conditions": [
+        {"field": "integrity", "op": "eq",  "value": "intact"},
+        {"field": "er",        "op": "gte", "value": 9}
       ]
     }
   ]

@@ -1,0 +1,173 @@
+{
+  "rules": [
+    {
+      "name": "新规则",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "OR",
+      "conditions": [
+        {
+          "field": "mr",
+          "op": "lte",
+          "value": 6
+        },
+        {
+          "field": "tn",
+          "op": "lte",
+          "value": 6
+        },
+        {
+          "field": "md",
+          "op": "lte",
+          "value": 5.5
+        }
+      ]
+    },
+    {
+      "name": "新规则",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "field": "mr",
+          "op": "lt",
+          "value": 7
+        },
+        {
+          "field": "ei",
+          "op": "lt",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "name": "新规则",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "field": "ar",
+          "op": "lt",
+          "value": 5.5
+        },
+        {
+          "field": "sg",
+          "op": "lt",
+          "value": 6
+        },
+        {
+          "field": "tea",
+          "op": "lt",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "name": "新规则",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "field": "tea",
+          "op": "lt",
+          "value": 6.5
+        }
+      ]
+    },
+    {
+      "name": "新规则",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "field": "marketing",
+          "op": "eq",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "新规则",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "field": "integrity",
+          "op": "in",
+          "value": [
+            "absent"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "新规则",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "field": "cc",
+          "op": "gte",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "name": "新规则",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": []
+    },
+    {
+      "name": "新规则",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "field": "er",
+          "op": "gt",
+          "value": 5.5
+        },
+        {
+          "field": "ei",
+          "op": "lt",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "name": "新规则",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {
+          "field": "cs",
+          "op": "lt",
+          "value": 7.5
+        },
+        {
+          "field": "ei",
+          "op": "lt",
+          "value": 8
+        },
+        {
+          "field": "mr",
+          "op": "lt",
+          "value": 7.5
+        }
+      ]
+    }
+  ],
+  "inter_logic": "OR",
+  "force_keep_hr": true,
+  "keep_na": true
+}

@@ -31,6 +31,7 @@ def _get_score(parsed, abbr, long_key):
 
 def _get_flag(parsed, short, long_key):
     v = parsed.get(short)
+    if v is None: v = parsed.get(f"{short}_f")
     if v is None: v = parsed.get(long_key)
     if isinstance(v, bool): return v
     if isinstance(v, dict): return v.get("f") if "f" in v else v.get("flag")
@@ -48,6 +49,8 @@ def load_data():
     records = []
     for l in lines:
         r = json.loads(l)
+        if not r.get("ok"):
+            continue
         parsed = r.get("parsed") or {}
         if not isinstance(parsed, dict):
             continue
@@ -71,6 +74,7 @@ BOOL_FIELDS  = {"marketing": "marketing_detected", "human_review": "human_review
 ENUM_FIELDS  = {"integrity": ["intact", "partial", "broken", "absent"]}
 ALL_FIELDS   = list(SCORE_FIELDS) + list(BOOL_FIELDS) + list(ENUM_FIELDS)
 FIELD_LABELS = {**SCORE_FIELDS, **BOOL_FIELDS, "integrity": "logical_chain.integrity"}
+FIELD_ALIASES = {"mk_f": "marketing", "hr_f": "human_review"}
 
 df = load_data()
 N_TOTAL = 30983
@@ -113,27 +117,30 @@ if "rules" not in st.session_state:
 # ── 条件求值 ─────────────────────────────────────────────────
 def eval_cond(df, cond):
     f, op, v = cond["field"], cond["op"], cond["value"]
+    f = FIELD_ALIASES.get(f, f)
+    if f not in df.columns:
+        return pd.Series([False]*len(df))
     col = df[f]
     if op == "lt":  return col.fillna(999)  < v
     if op == "lte": return col.fillna(999)  <= v
     if op == "gt":  return col.fillna(-999) > v
     if op == "gte": return col.fillna(-999) >= v
-    if op == "eq":  return col.fillna(object()) == v
-    if op == "neq": return col.fillna(object()) != v
+    if op == "eq":  return col.notna() & (col == v)
+    if op == "neq": return col.notna() & (col != v)
     if op == "in":  return col.isin(v if isinstance(v, list) else [v])
     return pd.Series([False]*len(df))
 
 def eval_rule(df, rule):
-    masks = [eval_cond(df, c) for c in rule["conditions"]]
+    masks = [eval_cond(df, c) for c in rule.get("conditions", [])]
     if not masks:
         return pd.Series([False]*len(df))
     result = masks[0]
     for m in masks[1:]:
-        result = (result & m) if rule["internal_logic"] == "AND" else (result | m)
+        result = (result & m) if rule.get("internal_logic", "AND") == "AND" else (result | m)
     return ~result if rule.get("negate") else result
 
 def eval_all(df, rules, inter_logic, force_keep_hr):
-    active = [r for r in rules if r["enabled"]]
+    active = [r for r in rules if r.get("enabled", True)]
     if not active:
         return pd.Series([False]*len(df))
     hits = [eval_rule(df, r) for r in active]
@@ -147,6 +154,7 @@ def eval_all(df, rules, inter_logic, force_keep_hr):
 # ── 条件编辑器 ───────────────────────────────────────────────
 def condition_editor(rule_idx, cond, cond_idx, prefix):
     cols = st.columns([2, 1.5, 2.5, 0.5])
+    cond["field"] = FIELD_ALIASES.get(cond["field"], cond["field"])
     field = cols[0].selectbox("字段", ALL_FIELDS,
         index=ALL_FIELDS.index(cond["field"]),
         format_func=lambda x: FIELD_LABELS.get(x, x),
