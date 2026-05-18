@@ -152,6 +152,11 @@ def eval_config(parsed, config):
     rejected = all(hits) if logic == "AND" else any(hits)
     if config.get("force_keep_hr") and parsed.get("hr_f"):
         rejected = False
+    if rejected and config.get("rescue_rules"):
+        for r in config["rescue_rules"]:
+            if eval_rule(parsed, r, keep_na):
+                rejected = False
+                break
     return rejected
 
 

@@ -87,6 +87,11 @@ def eval_config(df, config):
         fused = (fused & h) if config["inter_logic"] == "AND" else (fused | h)
     if config.get("force_keep_hr"):
         fused &= ~(df["human_review"].fillna(False) == True)
+    if config.get("rescue_rules"):
+        rescue = pd.Series([False] * len(df))
+        for r in config["rescue_rules"]:
+            rescue |= eval_rule(df, r)
+        fused &= ~rescue
     return fused
 
 # ── 加载规则文件 ─────────────────────────────────────────────
