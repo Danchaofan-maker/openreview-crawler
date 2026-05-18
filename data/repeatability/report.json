@@ -1,0 +1,78 @@
+{
+  "n_papers": 9,
+  "n_repeats": 5,
+  "model": "deepseek-v4-pro",
+  "fields": {
+    "mr": {
+      "mean_within_std": 0.515,
+      "median_within_std": 0.548,
+      "max_within_std": 0.908,
+      "anchor_rate": 1.0,
+      "n_papers": 9
+    },
+    "tn": {
+      "mean_within_std": 0.803,
+      "median_within_std": 0.671,
+      "max_within_std": 1.636,
+      "anchor_rate": 1.0,
+      "n_papers": 9
+    },
+    "md": {
+      "mean_within_std": 0.701,
+      "median_within_std": 0.837,
+      "max_within_std": 1.14,
+      "anchor_rate": 1.0,
+      "n_papers": 9
+    },
+    "ar": {
+      "mean_within_std": 1.269,
+      "median_within_std": 1.14,
+      "max_within_std": 2.302,
+      "anchor_rate": 1.0,
+      "n_papers": 9
+    },
+    "er": {
+      "mean_within_std": 0.813,
+      "median_within_std": 0.837,
+      "max_within_std": 1.14,
+      "anchor_rate": 1.0,
+      "n_papers": 9
+    },
+    "tea": {
+      "mean_within_std": 1.276,
+      "median_within_std": 1.327,
+      "max_within_std": 1.517,
+      "anchor_rate": 1.0,
+      "n_papers": 6
+    },
+    "cc": {
+      "mean_within_std": 0.708,
+      "median_within_std": 0.707,
+      "max_within_std": 1.342,
+      "anchor_rate": 1.0,
+      "n_papers": 9
+    },
+    "ei": {
+      "mean_within_std": 1.254,
+      "median_within_std": 0.975,
+      "max_within_std": 2.49,
+      "anchor_rate": 1.0,
+      "n_papers": 9
+    },
+    "sg": {
+      "mean_within_std": 0.985,
+      "median_within_std": 0.837,
+      "max_within_std": 1.924,
+      "anchor_rate": 1.0,
+      "n_papers": 9
+    },
+    "cs": {
+      "mean_within_std": 0.623,
+      "median_within_std": 0.548,
+      "max_within_std": 0.894,
+      "anchor_rate": 1.0,
+      "n_papers": 9
+    }
+  },
+  "ig_consistency_mean": 0.778
+}
