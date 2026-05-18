@@ -10,17 +10,17 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 PORT = 8080
-PROJECT = Path(__file__).parent
+PROJECT = Path(__file__).parent.parent
 
 _candidate_full = PROJECT / "data/full/output.jsonl"
 _candidate_flat = PROJECT / "data/output.jsonl"
 DATA_FILE = _candidate_full if _candidate_full.exists() else _candidate_flat
 
-HTML_FILE = PROJECT / "paper_analysis.html"
+HTML_FILE = Path(__file__).parent / "paper_analysis.html"
 if not HTML_FILE.exists():
     HTML_FILE = Path.home() / "paper_analysis.html"
 
-EXPLORE_DIR = PROJECT / "explore"
+EXPLORE_DIR = PROJECT / "03_filter" / "rules"
 FAV_FILE = PROJECT / "data/favorites.json"
 
 PAPERS = []
