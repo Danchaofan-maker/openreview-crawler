@@ -27,6 +27,8 @@ OUTPUT_FILE = pathlib.Path("03_filter/mmr_corpus.jsonl")
 # ── rules engine ─────────────────────────────────────────────────────────────
 def _get_val(p, field):
     if field in ("mk_f", "hr_f"): return p.get(field)
+    if field == "marketing": return p.get("mk_f")
+    if field == "human_review": return p.get("hr_f")
     if field == "integrity": return p.get("ig") or p.get("integrity")
     v = p.get(field)
     if isinstance(v, (int, float)): return v

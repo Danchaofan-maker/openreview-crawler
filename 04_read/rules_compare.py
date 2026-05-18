@@ -39,7 +39,7 @@ def _get_integrity(parsed):
 
 @st.cache_data
 def load_data():
-    lines = pathlib.Path("data/llm_v4pro_thinking_N600_seed42.jsonl").read_text().strip().split("\n")
+    lines = pathlib.Path("data/full/output.jsonl").read_text().strip().split("\n")
     records = []
     for l in lines:
         r = json.loads(l)
@@ -96,12 +96,12 @@ def eval_config(df, config):
 
 # ── 加载规则文件 ─────────────────────────────────────────────
 RULE_FILES = {
-    "jes":         "explore/rules_jes.json",
-    "danchaofan":  "explore/rules_danchaofan.json",
-    "agent_v1":    "explore/rules_insight_v1.json",
+    "jes":        "03_filter/rules/rules_jes.json",
+    "danchaofan": "03_filter/rules/rules_danchaofan.json",
+    "claude":     "03_filter/rules/rules_claude.json",
 }
-LABELS = {"jes": "Jes", "danchaofan": "Danchaofan", "agent_v1": "Agent v1"}
-COLORS = {"jes": "#2196F3", "danchaofan": "#FF9800", "agent_v1": "#9C27B0"}
+LABELS = {"jes": "Jes", "danchaofan": "Danchaofan", "claude": "Claude"}
+COLORS = {"jes": "#2196F3", "danchaofan": "#FF9800", "claude": "#9C27B0"}
 
 configs, fused_masks = {}, {}
 for key, path in RULE_FILES.items():
