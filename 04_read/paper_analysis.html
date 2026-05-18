@@ -121,6 +121,29 @@ h1{text-align:center;font-size:28px;font-weight:700;margin-bottom:8px;color:#1a2
 .rr-score{background:#e8eaed;border-radius:4px;padding:1px 6px;margin-right:3px;font-weight:700;font-size:13px}
 .loading{text-align:center;padding:60px;color:#7f8c8d;font-size:15px}
 @media(max-width:600px){.dims-grid{grid-template-columns:1fr}.lc-grid{grid-template-columns:1fr}.paper-header{flex-direction:column}.paper-idx{font-size:20px}}
+
+/* ── legend panel ── */
+.legend-panel{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:14px;overflow:hidden}
+.legend-header{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;user-select:none}
+.legend-header:hover{background:#fafbfc}
+.legend-header-title{font-size:13px;font-weight:700;color:#2c3e50}
+.legend-header-chevron{margin-left:auto;font-size:12px;color:#95a5a6;transition:transform .2s}
+.legend-header-chevron.open{transform:rotate(180deg)}
+.legend-body{padding:14px 18px;display:none;border-top:1px solid #f0f2f5}
+.legend-body.open{display:block}
+.legend-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.legend-cols{grid-template-columns:1fr}}
+.legend-table{width:100%;border-collapse:collapse;font-size:12px}
+.legend-table th{text-align:left;color:#95a5a6;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:4px 8px 6px;border-bottom:1px solid #ecf0f1}
+.legend-table td{padding:5px 8px;border-bottom:1px solid #f5f6f7;vertical-align:top}
+.legend-table tr:last-child td{border-bottom:none}
+.legend-abbr{font-family:monospace;font-weight:700;color:#2980b9;white-space:nowrap}
+.legend-cn{color:#2c3e50;font-weight:600;white-space:nowrap}
+.legend-desc{color:#7f8c8d}
+.legend-ig-intact{color:#1e8449;font-weight:700}
+.legend-ig-partial{color:#d68910;font-weight:700}
+.legend-ig-broken{color:#c0392b;font-weight:700}
+.legend-ig-absent{color:#7f8c8d;font-weight:700}
 </style>
 </head>
 <body>
@@ -152,6 +175,72 @@ h1{text-align:center;font-size:28px;font-weight:700;margin-bottom:8px;color:#1a2
   <label>最低严密度 mr ≥ <input type="number" id="minMr" min="0" max="10" step="0.5" placeholder="—" oninput="debounceFilter()"></label>
   <label>最高实验依赖 er ≤ <input type="number" id="maxEr" min="0" max="10" step="0.5" placeholder="—" oninput="debounceFilter()"></label>
   <label><input type="checkbox" id="favOnly" onchange="applyFilters()"> ⭐ 仅看收藏 (<span id="favCount">0</span>)</label>
+</div>
+
+<!-- ── legend panel ── -->
+<div class="legend-panel">
+  <div class="legend-header" onclick="toggleLegend()">
+    <span class="legend-header-title">📖 字段速查</span>
+    <span class="legend-header-chevron" id="legendChevron">▾</span>
+  </div>
+  <div class="legend-body" id="legendBody">
+    <div class="legend-cols">
+      <div>
+        <table class="legend-table">
+          <tr><th>缩写</th><th>中文</th><th>一句话</th></tr>
+          <tr><td class="legend-abbr">mr</td><td class="legend-cn">数学严谨</td><td class="legend-desc">推导链有多严格，有无漏洞</td></tr>
+          <tr><td class="legend-abbr">md</td><td class="legend-cn">数学深度</td><td class="legend-desc">用到的数学工具有多深</td></tr>
+          <tr><td class="legend-abbr">tn</td><td class="legend-cn">理论新颖</td><td class="legend-desc">理论贡献本身有多新</td></tr>
+          <tr><td class="legend-abbr">ar</td><td class="legend-cn">假设现实</td><td class="legend-desc">假设离现实有多近（高=接地气）</td></tr>
+          <tr><td class="legend-abbr">er</td><td class="legend-cn">经验依赖</td><td class="legend-desc">结论多大程度靠跑实验支撑</td></tr>
+          <tr><td class="legend-abbr">tea</td><td class="legend-cn">理论实验咬合</td><td class="legend-desc">理论预测和实验结果对得上吗</td></tr>
+          <tr><td class="legend-abbr">cc</td><td class="legend-cn">算力门槛</td><td class="legend-desc">复现这篇需要多少算力</td></tr>
+          <tr><td class="legend-abbr">ei</td><td class="legend-cn">认识论意图</td><td class="legend-desc">这篇想证明什么 vs 想展示什么</td></tr>
+          <tr><td class="legend-abbr">sg</td><td class="legend-cn">适用范围</td><td class="legend-desc">结论能推广到多广的场景</td></tr>
+          <tr><td class="legend-abbr">cs</td><td class="legend-cn">置信度</td><td class="legend-desc">模型自评：对以上打分多有把握</td></tr>
+        </table>
+      </div>
+      <div>
+        <table class="legend-table">
+          <tr><th>标签</th><th>含义</th></tr>
+          <tr>
+            <td><span class="legend-ig-intact">intact</span></td>
+            <td class="legend-desc">推导链完整，结论可从前提严格导出</td>
+          </tr>
+          <tr>
+            <td><span class="legend-ig-partial">partial</span></td>
+            <td class="legend-desc">有证明但有跳步 / 部分结论靠实验补</td>
+          </tr>
+          <tr>
+            <td><span class="legend-ig-broken">broken</span></td>
+            <td class="legend-desc">声称有理论但推导明显不成立</td>
+          </tr>
+          <tr>
+            <td><span class="legend-ig-absent">absent</span></td>
+            <td class="legend-desc">纯实验 / 工程，没有数学骨架</td>
+          </tr>
+          <tr><td colspan="2" style="padding-top:10px"></td></tr>
+          <tr>
+            <td class="legend-abbr">mk_f</td>
+            <td class="legend-desc">营销包装 — 有明显炒作 / 夸大措辞</td>
+          </tr>
+          <tr>
+            <td class="legend-abbr">hr_f</td>
+            <td class="legend-desc">人工复查 — 边界模糊，建议人看</td>
+          </tr>
+          <tr>
+            <td class="legend-abbr">ig</td>
+            <td class="legend-desc">逻辑链完整性（同上四类）</td>
+          </tr>
+        </table>
+        <div style="margin-top:10px;padding:8px 10px;background:#f8f9fa;border-radius:8px;font-size:11px;color:#95a5a6;line-height:1.6">
+          可信度：<strong style="color:#2c3e50">mr cs</strong> 高 ·
+          <strong style="color:#2c3e50">md cc er tn</strong> 中 ·
+          <strong style="color:#2c3e50">sg ei tea ar</strong> 低（方差大）
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ── rules panel ── -->
@@ -257,6 +346,13 @@ function newCond() {
 }
 
 // ── panel open/close ──────────────────────────────────────────────────────────
+let legendOpen = false;
+function toggleLegend() {
+  legendOpen = !legendOpen;
+  document.getElementById('legendBody').className = 'legend-body' + (legendOpen ? ' open' : '');
+  document.getElementById('legendChevron').className = 'legend-header-chevron' + (legendOpen ? ' open' : '');
+}
+
 function toggleRulesPanel() {
   rulesPanelOpen = !rulesPanelOpen;
   document.getElementById('rulesBody').className = 'rules-body' + (rulesPanelOpen ? ' open' : '');

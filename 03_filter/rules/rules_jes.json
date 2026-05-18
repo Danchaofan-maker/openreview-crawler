@@ -1,0 +1,19 @@
+{
+  "inter_logic": "OR",
+  "force_keep_hr": true,
+  "keep_na": true,
+  "rules": [
+    {
+      "name": "R1 极端benchmark论文：五维同时确认无骨架",
+      "enabled": true,
+      "internal_logic": "AND",
+      "negate": false,
+      "conditions": [
+        {"field": "integrity", "op": "eq",  "value": "absent"},
+        {"field": "tn",        "op": "lt",  "value": 3},
+        {"field": "md",        "op": "lt",  "value": 2},
+        {"field": "er",        "op": "gt",  "value": 7}
+      ]
+    }
+  ]
+}

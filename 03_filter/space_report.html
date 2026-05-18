@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>骨架域：特征空间分析报告</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f1117;color:#e0e6f0;font-family:'Segoe UI',sans-serif;padding:32px;line-height:1.6}
+h1{font-size:26px;font-weight:800;color:#fff;margin-bottom:4px}
+.subtitle{color:#6b7a99;font-size:14px;margin-bottom:36px}
+h2{font-size:16px;font-weight:700;color:#a8b8d8;text-transform:uppercase;letter-spacing:1px;margin-bottom:18px;padding-bottom:8px;border-bottom:1px solid #1e2535}
+h3{font-size:14px;font-weight:700;color:#7a8aaa;margin-bottom:10px}
+.section{margin-bottom:48px}
+
+/* stat cards */
+.stat-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:32px}
+.stat-card{background:#161b28;border:1px solid #1e2535;border-radius:12px;padding:16px 22px;min-width:160px;flex:1}
+.stat-val{font-size:28px;font-weight:800;color:#4a9eff}
+.stat-val.green{color:#2ecc71}
+.stat-val.amber{color:#f39c12}
+.stat-val.red{color:#e74c3c}
+.stat-lbl{font-size:12px;color:#6b7a99;margin-top:4px}
+
+/* two-column grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr}}
+
+/* chart cards */
+.chart-card{background:#161b28;border:1px solid #1e2535;border-radius:12px;padding:20px}
+.chart-card canvas{max-height:300px}
+
+/* dim table */
+.dim-table{width:100%;border-collapse:collapse;font-size:13px}
+.dim-table th{text-align:left;color:#6b7a99;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:1px solid #1e2535}
+.dim-table td{padding:9px 12px;border-bottom:1px solid #161b28;vertical-align:middle}
+.dim-table tr:hover td{background:#1a2030}
+.tag{display:inline-block;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;white-space:nowrap}
+.tag-bimodal{background:#1a3a5c;color:#4a9eff}
+.tag-unimodal{background:#1a3a2a;color:#2ecc71}
+.tag-compressed{background:#2a2a1a;color:#f1c40f}
+.reliability-bar{height:7px;border-radius:4px;background:#1e2535;overflow:hidden;min-width:80px;display:inline-block}
+.reliability-fill{height:100%;border-radius:4px}
+
+/* correlation heatmap */
+.heatmap{display:inline-grid;gap:3px;font-size:11px}
+.heatmap-cell{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:5px;font-weight:700;font-size:11px;cursor:default}
+.heatmap-label{width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#7a8aaa}
+
+/* insight boxes */
+.insight{background:#161b28;border-left:3px solid #4a9eff;border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:14px}
+.insight.green{border-color:#2ecc71}
+.insight.amber{border-color:#f39c12}
+.insight.red{border-color:#e74c3c}
+.insight-title{font-size:13px;font-weight:700;color:#a8b8d8;margin-bottom:5px}
+.insight-body{font-size:13px;color:#8a9ab8;line-height:1.7}
+
+/* axis theory */
+.axis-card{background:#161b28;border:1px solid #1e2535;border-radius:12px;padding:18px;margin-bottom:14px}
+.axis-name{font-size:15px;font-weight:800;margin-bottom:8px}
+.axis-dims{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.dim-chip{background:#1e2535;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700}
+.dim-chip.pos{background:#1a3a5c;color:#4a9eff}
+.dim-chip.neg{background:#3a1a1a;color:#e74c3c}
+.dim-chip.neu{background:#2a2a1a;color:#f1c40f}
+.axis-note{font-size:12px;color:#6b7a99;line-height:1.6}
+
+/* ig radar wrapper */
+.radar-wrap{position:relative;height:340px}
+
+/* archetype table */
+.arch-table{width:100%;border-collapse:collapse;font-size:12px}
+.arch-table th{padding:8px 10px;text-align:right;color:#6b7a99;font-weight:700;border-bottom:1px solid #1e2535}
+.arch-table th:first-child{text-align:left}
+.arch-table td{padding:8px 10px;text-align:right;border-bottom:1px solid #161b28}
+.arch-table td:first-child{text-align:left;font-weight:700}
+.arch-table tr:hover td{background:#1a2030}
+
+/* score heat cell */
+.sc{border-radius:4px;padding:2px 8px;display:inline-block;min-width:38px;text-align:center}
+
+/* conclusions */
+.conc-num{font-size:22px;font-weight:800;color:#4a9eff;margin-right:10px;opacity:.5}
+.conc-row{display:flex;align-items:flex-start;margin-bottom:16px}
+.conc-text{font-size:13px;color:#a0b0cc;line-height:1.7}
+</style>
+</head>
+<body>
+
+<h1>骨架域：特征空间分析报告</h1>
+<p class="subtitle">数据来源：data/full/output.jsonl · 31,262条记录 · 模型：DeepSeek-V4-Pro · prompt v0.8 · 2026-05-18</p>
+
+<!-- ── 快照 ── -->
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-val">30,643</div><div class="stat-lbl">有效打分记录</div></div>
+  <div class="stat-card"><div class="stat-val green">3,193</div><div class="stat-lbl">intact（推导链完整）10.4%</div></div>
+  <div class="stat-card"><div class="stat-val" style="color:#3498db">14,834</div><div class="stat-lbl">partial（部分完整）48.4%</div></div>
+  <div class="stat-card"><div class="stat-val amber">11,438</div><div class="stat-lbl">absent（纯实验/无骨架）37.3%</div></div>
+  <div class="stat-card"><div class="stat-val red">1,178</div><div class="stat-lbl">broken（推导明显断裂）3.8%</div></div>
+</div>
+
+<!-- ── Section 1: 分布形态 ── -->
+<div class="section">
+<h2>01 · 各维度分布形态</h2>
+<p style="font-size:13px;color:#6b7a99;margin-bottom:18px">
+  打分格点为半整数（0, 0.5, 1.0 … 10.0），共21个离散值，锚定率100%。以下分析基于 Hartigan dip test + 双峰高斯混合拟合。
+</p>
+
+<div class="chart-card" style="margin-bottom:20px">
+  <h3>各维度均值与双峰分量位置</h3>
+  <canvas id="dimOverview"></canvas>
+</div>
+
+<table class="dim-table">
+<thead><tr>
+  <th>维度</th><th>中文名</th><th>形态</th><th>均值</th><th>标准差</th>
+  <th>低峰中心</th><th>高峰中心</th><th>推荐阈值</th><th>筛选价值</th>
+</tr></thead>
+<tbody>
+  <tr><td><b>mr</b></td><td>数学严谨</td><td><span class="tag tag-bimodal">双峰</span></td><td>3.37</td><td>2.50</td><td>1.61（61%）</td><td>6.15（39%）</td><td><b>3.99</b></td><td>极高</td></tr>
+  <tr><td><b>tn</b></td><td>理论新颖</td><td><span class="tag tag-bimodal">双峰</span></td><td>4.13</td><td>2.00</td><td>2.47（41%）</td><td>5.27（59%）</td><td><b>2.47</b></td><td>高</td></tr>
+  <tr><td><b>md</b></td><td>数学深度</td><td><span class="tag tag-bimodal">双峰</span></td><td>2.49</td><td>1.98</td><td>0.92（49%）</td><td>4.00（51%）</td><td><b>2.71</b></td><td>高</td></tr>
+  <tr><td><b>ar</b></td><td>假设现实</td><td><span class="tag tag-bimodal">双峰</span></td><td>4.38</td><td>2.09</td><td>0.18（11%）</td><td>4.89（89%）</td><td>—</td><td>中（独立轴）</td></tr>
+  <tr><td><b>er</b></td><td>经验依赖</td><td><span class="tag tag-bimodal">双峰</span></td><td>6.27</td><td>2.15</td><td>4.95（51%）</td><td>7.63（49%）</td><td><b>4.95</b></td><td>极高（mr镜像）</td></tr>
+  <tr><td><b>cc</b></td><td>算力门槛</td><td><span class="tag tag-unimodal">单峰</span></td><td>3.27</td><td>1.40</td><td colspan="2">无双峰结构</td><td>—</td><td>低（区分力不足）</td></tr>
+  <tr><td><b>ei</b></td><td>认识论意图</td><td><span class="tag tag-bimodal">双峰</span></td><td>2.65</td><td>2.47</td><td>1.49（78%）</td><td>6.87（22%）</td><td><b>4.52</b></td><td>中（相关性高）</td></tr>
+  <tr><td><b>sg</b></td><td>适用范围</td><td><span class="tag tag-bimodal">双峰</span></td><td>3.51</td><td>2.00</td><td>2.44（66%）</td><td>5.61（34%）</td><td><b>5.61</b></td><td>中（相关性高）</td></tr>
+  <tr><td><b>cs</b></td><td>置信度</td><td><span class="tag tag-compressed">压缩正态</span></td><td>6.89</td><td>1.03</td><td colspan="2">不区分内容，仅反映模型自信</td><td>—</td><td>极低（标准差仅1.03）</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ── Section 2: 相关性 ── -->
+<div class="section">
+<h2>02 · 维度相关性与真实自由度</h2>
+<div class="grid2">
+  <div>
+    <div class="chart-card">
+      <h3>Pearson相关系数热图（全量30k）</h3>
+      <div id="heatmapWrap" style="overflow-x:auto"></div>
+    </div>
+  </div>
+  <div>
+    <div class="insight">
+      <div class="insight-title">发现：10个维度实际只有 3 条真实独立轴</div>
+      <div class="insight-body">
+        相关性分析（Pearson + Spearman 一致）揭示了严重的多重共线性。全量30k数据与Codex的600篇样本结论一致：
+        <br><br>
+        <b>· mr × tn × md</b> 两两 r = 0.82–0.90，构成同一"理论深度"轴<br>
+        <b>· er</b> 是这个轴的镜像（r ≈ −0.83 至 −0.77）<br>
+        <b>· ei / sg</b> 与理论轴正相关（r ≈ 0.53–0.66），信息冗余<br>
+        <b>· ar</b> 与所有维度相关性接近0，是唯一真正独立的维度<br>
+        <b>· cc</b> 中等独立（r ≈ −0.39 至 −0.34）<br>
+        <b>· cs</b> 几乎完全独立（r < 0.13 与所有维度）
+      </div>
+    </div>
+
+    <div class="axis-card">
+      <div class="axis-name" style="color:#4a9eff">轴 A · 理论强度轴（主轴）</div>
+      <div class="axis-dims">
+        <span class="dim-chip pos">mr 正向</span>
+        <span class="dim-chip pos">tn 正向</span>
+        <span class="dim-chip pos">md 正向</span>
+        <span class="dim-chip neg">er 反向</span>
+        <span class="dim-chip pos">ei 附带</span>
+        <span class="dim-chip pos">sg 附带</span>
+      </div>
+      <div class="axis-note">解释方差最多。知道一篇论文的mr，基本可以预测tn、md、er的值（r²≈0.65–0.81）。这六个维度本质上是同一个"这篇论文有多理论化"的反复测量。</div>
+    </div>
+
+    <div class="axis-card">
+      <div class="axis-name" style="color:#2ecc71">轴 B · 假设现实度轴（独立）</div>
+      <div class="axis-dims">
+        <span class="dim-chip neu">ar 独立</span>
+      </div>
+      <div class="axis-note">与理论强度轴正交。顶级纯数学论文未必假设更现实——"数学严谨"和"假设接地气"是不同的东西。这是唯一真正提供独立信息的维度。</div>
+    </div>
+
+    <div class="axis-card">
+      <div class="axis-name" style="color:#f39c12">轴 C · 算力规模轴（弱独立）</div>
+      <div class="axis-dims">
+        <span class="dim-chip neu">cc 弱独立</span>
+      </div>
+      <div class="axis-note">与理论轴负相关（r≈−0.39），但分布单峰、区分力弱（std=1.40，p75−p25=1.0）。对精读筛选价值有限，但在识别"重算力大规模实验"类论文时有意义。</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── Section 3: ig 四类画像 ── -->
+<div class="section">
+<h2>03 · 四类论文的特征画像</h2>
+<div class="grid2">
+  <div class="chart-card">
+    <h3>各ig类别均值雷达图（9维）</h3>
+    <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
+  </div>
+  <div>
+    <table class="arch-table">
+    <thead><tr>
+      <th style="text-align:left">维度</th>
+      <th style="color:#2ecc71">intact</th>
+      <th style="color:#3498db">partial</th>
+      <th style="color:#e74c3c">broken</th>
+      <th style="color:#95a5a6">absent</th>
+    </tr></thead>
+    <tbody id="archTbody"></tbody>
+    </table>
+    <div style="margin-top:14px">
+    <div class="insight green" style="margin-bottom:8px">
+      <div class="insight-title">intact 特征</div>
+      <div class="insight-body">mr=7.06、er=3.62、ei=5.19。高理论+低实验依赖+高认识论意图。这就是我们想要的论文。</div>
+    </div>
+    <div class="insight red">
+      <div class="insight-title">broken vs absent 的区别</div>
+      <div class="insight-body">broken 的 tn=3.55（比 absent 高！）说明 broken 论文<b>声称</b>有理论贡献，只是推导不成立。absent 则根本不进行理论声明（tn=2.43、mr=1.09）。两类虽然都不是我们要的，但来路不同。</div>
+    </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── Section 4: UMAP ── -->
+<div class="section">
+<h2>04 · UMAP 空间验证：9维 → 2维的几何结构</h2>
+<div class="grid2">
+  <div>
+    <div class="insight green">
+      <div class="insight-title">分离比 1.44 — 特征空间有真实几何结构</div>
+      <div class="insight-body">
+        8000篇论文（分层抽样，全部4类）降维后：<br><br>
+        <b>intact</b> 质心 [10.14, 8.22]，扩散半径 0.98<br>
+        <b>partial</b> 质心 [6.17, 8.23]，扩散半径 1.77<br>
+        质心距离 / 扩散之和 = <b>3.96 / 2.75 = 1.44</b><br><br>
+        大于1说明两类论文在特征空间里有清晰的分布分离，不是随机噪声。当前 rules 的线性切割有几何依据。
+      </div>
+    </div>
+    <div class="chart-card" style="margin-top:16px">
+      <h3>UMAP 分离度可视化（示意）</h3>
+      <canvas id="umapDemo" height="220"></canvas>
+    </div>
+  </div>
+  <div>
+    <div class="insight amber">
+      <div class="insight-title">重要限制：Euclidean 距离在序数格点上是近似</div>
+      <div class="insight-body">
+        分数是半整数离散格点（锚定率100%）。用欧式距离计算"2.5分和3.0分的距离"与"2.0分和2.5分的距离"相等这个假设是近似的，因为模型对格点的使用频率不均匀。<br><br>
+        然而，Spearman相关（序数）与Pearson（等距）结论高度一致（差异 < 0.02），说明在30k这个规模下，等距假设引入的误差被样本量稀释了。<b>UMAP和当前rules继续用欧式距离是合理的</b>，但应避免对单格点差异（如3.5 vs 4.0）做精确性解读。
+      </div>
+    </div>
+    <div class="insight">
+      <div class="insight-title">absent 论文不是废纸</div>
+      <div class="insight-body">
+        97.1% 的 absent 论文有非零分数，er（96.6%）、cc（95.8%）、sg（90.9%）覆盖率极高。absent 在特征空间里是"低mr + 高er"的角落，和 broken 有重叠但不完全相同。<br><br>
+        之前 UMAP 丢掉 absent 是错误的——现在已修正，把 absent 纳入投影（灰色点）。
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── Section 5: 可信度 ── -->
+<div class="section">
+<h2>05 · 打分可信度：重复实验结果（9篇 × 5次）</h2>
+<div class="grid2">
+  <div class="chart-card">
+    <h3>各维度组内标准差（同一篇论文5次打分的波动）</h3>
+    <canvas id="reliabilityChart"></canvas>
+  </div>
+  <div>
+    <div class="insight green">
+      <div class="insight-title">可信轴（std &lt; 0.75）</div>
+      <div class="insight-body"><b>mr</b>（0.515）和 <b>cs</b>（0.623）。mr 是整个体系里最稳定的维度，适合作为主要筛选轴的基础。</div>
+    </div>
+    <div class="insight" style="margin-top:10px">
+      <div class="insight-title">中等轴（0.75 ≤ std &lt; 1.0）</div>
+      <div class="insight-body"><b>md</b>（0.701）、<b>cc</b>（0.708）、<b>er</b>（0.813）、<b>tn</b>（0.803）。可用于筛选但不应对单格点差异过度解读。</div>
+    </div>
+    <div class="insight amber" style="margin-top:10px">
+      <div class="insight-title">噪声轴（std ≥ 1.0）</div>
+      <div class="insight-body"><b>sg</b>（0.985）、<b>ei</b>（1.254）、<b>tea</b>（1.276）、<b>ar</b>（1.269）。高方差意味着同一篇论文多次打分差距可达2分。不适合精确阈值切割，只适合大范围过滤或辅助权重。<br><br>
+      注意：ar 既是噪声轴（重复实验std=1.27）又是独立轴（与其他维度不相关）——独立不代表可靠。</div>
+    </div>
+    <div style="margin-top:14px;padding:12px 16px;background:#161b28;border-radius:10px;font-size:12px;color:#6b7a99">
+      <b style="color:#a8b8d8">ig 分类一致率：0.778</b><br>
+      5次打分里 intact vs partial 边界有约22%的随机翻转，集中在mr=4~7的中间地带。force_keep_hr 的逻辑正是为此设计的。
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── Section 6: 建空间方案 ── -->
+<div class="section">
+<h2>06 · 如何建立特征空间：三条路径对比</h2>
+
+<div class="grid3">
+  <div class="chart-card">
+    <h3 style="color:#4a9eff">路径 A · 原始10维欧式空间</h3>
+    <div style="margin:10px 0;font-size:13px;color:#8a9ab8;line-height:1.7">
+      直接用10个维度做距离计算（UMAP已在用）。<br><br>
+      <b style="color:#2ecc71">优点：</b>无需转换，计算简单，UMAP分离比1.44已验证有效。<br><br>
+      <b style="color:#e74c3c">缺点：</b>多重共线性导致"理论强度"被隐式加权5~6倍（mr+tn+md+er_inverse+ei+sg全都携带同一信息），ar和cc被稀释。不是"均匀"的特征空间。
+    </div>
+    <div style="padding:8px 12px;background:#1a3a5c;border-radius:8px;font-size:12px;color:#4a9eff"><b>现状：UMAP已用此方案，结果可接受。</b></div>
+  </div>
+
+  <div class="chart-card">
+    <h3 style="color:#2ecc71">路径 B · PCA降维后的真实轴</h3>
+    <div style="margin:10px 0;font-size:13px;color:#8a9ab8;line-height:1.7">
+      先做主成分分析，取前3~4个主成分（估计解释方差 ~85%），再在PC空间做距离计算。<br><br>
+      <b style="color:#2ecc71">优点：</b>消除共线性，每个轴携带独立信息，距离度量更"均匀"。PC1≈理论强度，PC2≈假设现实，PC3≈算力/规模。<br><br>
+      <b style="color:#e74c3c">缺点：</b>主成分的可解释性下降，不直观；茶叶和ar的噪声会被PCA部分吸收。
+    </div>
+    <div style="padding:8px 12px;background:#1a3a2a;border-radius:8px;font-size:12px;color:#2ecc71"><b>推荐用于：聚类分析、论文相似度计算。</b></div>
+  </div>
+
+  <div class="chart-card">
+    <h3 style="color:#f39c12">路径 C · 手工双轴（mr轴 × ar轴）</h3>
+    <div style="margin:10px 0;font-size:13px;color:#8a9ab8;line-height:1.7">
+      直接用 <b>理论强度综合分</b>（mr的加权组合）作为X轴，<b>ar</b> 作为Y轴，构建2D人类可读空间。<br><br>
+      <b style="color:#2ecc71">优点：</b>完全可解释，X=数学骨架强度，Y=假设现实度。四象限直接对应四类论文价值判断。与现有rules体系兼容。<br><br>
+      <b style="color:#e74c3c">缺点：</b>丢弃了er/ei/sg/cc的独立信息（虽然不多），ar的高噪声（std=1.27）污染Y轴。
+    </div>
+    <div style="padding:8px 12px;background:#2a2a1a;border-radius:8px;font-size:12px;color:#f39c12"><b>推荐用于：人类浏览、向他人解释、制图。</b></div>
+  </div>
+</div>
+
+<div class="insight" style="margin-top:20px">
+  <div class="insight-title">对现有 rules 体系的含义</div>
+  <div class="insight-body">
+    Rules 用的是 <b>集合论 + 不等式（超平面切割）</b>，隐含了欧式/线性空间假设。这在数学上是正确的——每条规则是高维空间里的一个半空间，多条规则的交/并是多面体。只要我们想要的论文确实落在某个区域，规则就是有效的。<br><br>
+    多重共线性不影响rules的逻辑正确性，只影响"效率"：R2（mr &lt; 3）和R5（ig=partial AND mr &lt; 8.5）在维度相关的情况下有部分重叠，但不会产生错误排除。<b>可以继续用当前rules体系，但在写新规则时应优先用 mr 而不是同时用 mr + tn + md（三者冗余）。</b>
+  </div>
+</div>
+</div>
+
+<!-- ── Section 7: 结论 ── -->
+<div class="section">
+<h2>07 · 核心结论与后续行动</h2>
+<div class="conc-row"><span class="conc-num">1</span><div class="conc-text"><b style="color:#e0e6f0">10个维度 → 3条真实轴</b>。理论强度（mr主导）、假设现实度（ar独立）、算力规模（cc弱）。现有rules的实际信息冗余度较高，但逻辑上没有错误。</div></div>
+<div class="conc-row"><span class="conc-num">2</span><div class="conc-text"><b style="color:#e0e6f0">特征空间有真实几何结构</b>。UMAP分离比1.44证明intact和partial在9维空间里是可区分的，不是分布完全重叠的随机类别。rules在这个空间里的线性切割是有效的。</div></div>
+<div class="conc-row"><span class="conc-num">3</span><div class="conc-text"><b style="color:#e0e6f0">absent不应该被一刀切丢弃</b>。97%有非零分数，er/cc/sg维度有真实多样性。R1（ig=absent直接淘汰）对于我们的目标（精读数学骨架）是合理的，但absent论文在其他维度上存在独立的结构，未来可单独分析。</div></div>
+<div class="conc-row"><span class="conc-num">4</span><div class="conc-text"><b style="color:#e0e6f0">写新rules时的优先级</b>：① mr（最可靠 + 最有区分力 + 双峰谷值~4.0提供自然切割点）② er（mr的镜像，er≤4与mr≥6高度等价）③ ig（最清晰的类别标签）④ tn/md（辅助，与mr冗余）⑤ ar/cc（独立信息但噪声大）⑥ 避免 cs/ei/sg作为主要切割轴。</div></div>
+<div class="conc-row"><span class="conc-num">5</span><div class="conc-text"><b style="color:#e0e6f0">下一步</b>：① 运行PCA量化主成分方差贡献 ② 在PCA空间重跑UMAP（可能更清晰） ③ 写rules_jes.json和rules_danchaofan.json ④ 三规则集取交集确定精读语料库（目标1000~2000篇）</div></div>
+</div>
+
+<script>
+// ── embedded data ─────────────────────────────────────────────────────────────
+const FIELDS  = ['mr','tn','md','ar','er','cc','ei','sg','cs'];
+const FLABELS = ['数学严谨','理论新颖','数学深度','假设现实','经验依赖','算力门槛','认识论意图','适用范围','置信度'];
+
+const DIST = {
+  mr: { mean:3.37, comps:[{m:1.61,w:0.61},{m:6.15,w:0.39}], valley:3.99 },
+  tn: { mean:4.13, comps:[{m:2.47,w:0.41},{m:5.27,w:0.59}], valley:2.47 },
+  md: { mean:2.49, comps:[{m:0.92,w:0.49},{m:4.00,w:0.51}], valley:2.71 },
+  ar: { mean:4.38, comps:[{m:0.18,w:0.11},{m:4.89,w:0.89}], valley:1.20 },
+  er: { mean:6.27, comps:[{m:4.95,w:0.51},{m:7.63,w:0.49}], valley:4.95 },
+  cc: { mean:3.27, comps:[], valley:null },
+  ei: { mean:2.65, comps:[{m:1.49,w:0.78},{m:6.87,w:0.22}], valley:4.52 },
+  sg: { mean:3.51, comps:[{m:2.44,w:0.66},{m:5.61,w:0.34}], valley:5.61 },
+  cs: { mean:6.89, comps:[], valley:null },
+};
+
+const CORR_PEARSON = [
+  [1.00, 0.82, 0.90, 0.28,-0.83,-0.42, 0.56, 0.66, 0.13],
+  [0.82, 1.00, 0.82, 0.35,-0.74,-0.34, 0.53, 0.66, 0.05],
+  [0.90, 0.82, 1.00, 0.26,-0.77,-0.36, 0.52, 0.64, 0.08],
+  [0.28, 0.35, 0.26, 1.00,-0.26,-0.15, 0.22, 0.38, 0.03],
+  [-0.83,-0.74,-0.77,-0.26, 1.00, 0.53,-0.55,-0.62,-0.02],
+  [-0.42,-0.34,-0.36,-0.15, 0.53, 1.00,-0.40,-0.33,-0.01],
+  [0.56, 0.53, 0.52, 0.22,-0.55,-0.40, 1.00, 0.61, 0.19],
+  [0.66, 0.66, 0.64, 0.38,-0.62,-0.33, 0.61, 1.00, 0.16],
+  [0.13, 0.05, 0.08, 0.03,-0.02,-0.01, 0.19, 0.16, 1.00],
+];
+
+const IG_MEANS = {
+  intact:  [7.06, 6.58, 5.15, 5.17, 3.62, 2.27, 5.19, 5.72, 7.62],
+  partial: [4.45, 4.96, 3.33, 4.75, 5.42, 3.07, 3.17, 4.09, 6.70],
+  broken:  [1.99, 3.55, 1.55, 4.37, 7.24, 3.60, 1.73, 2.70, 6.47],
+  absent:  [1.09, 2.43, 0.76, 3.66, 8.00, 3.78, 1.36, 2.24, 6.97],
+};
+
+const RELIABILITY_STD = [0.515, 0.803, 0.701, 1.269, 0.813, 0.708, 1.254, 0.985, 0.623];
+
+// ── chart 1: dim overview ─────────────────────────────────────────────────────
+(function(){
+  const means    = FIELDS.map(f => DIST[f].mean);
+  const low      = FIELDS.map(f => DIST[f].comps[0]?.m ?? null);
+  const high     = FIELDS.map(f => DIST[f].comps.length > 1 ? DIST[f].comps[1].m : null);
+  new Chart(document.getElementById('dimOverview'), {
+    type: 'bar',
+    data: {
+      labels: FIELDS.map((f,i) => f + '  ' + FLABELS[i]),
+      datasets: [
+        { label: '整体均值', data: means, backgroundColor: '#4a9eff88', borderColor:'#4a9eff', borderWidth:1.5 },
+        { label: '低峰分量中心', data: low, backgroundColor: '#e74c3c88', borderColor:'#e74c3c', borderWidth:1.5 },
+        { label: '高峰分量中心', data: high, backgroundColor: '#2ecc7188', borderColor:'#2ecc71', borderWidth:1.5 },
+      ]
+    },
+    options: {
+      responsive:true, indexAxis:'y',
+      scales:{
+        x:{min:0,max:10,ticks:{color:'#6b7a99'},grid:{color:'#1e2535'}},
+        y:{ticks:{color:'#a8b8d8',font:{size:12}},grid:{color:'#1e2535'}}
+      },
+      plugins:{legend:{labels:{color:'#a8b8d8',font:{size:12}}}}
+    }
+  });
+})();
+
+// ── chart 2: correlation heatmap ──────────────────────────────────────────────
+(function(){
+  const n = 9;
+  const wrap = document.getElementById('heatmapWrap');
+  const grid = document.createElement('div');
+  grid.className = 'heatmap';
+  grid.style.gridTemplateColumns = `42px repeat(${n}, 42px)`;
+
+  function color(v) {
+    if (v === null) return '#1e2535';
+    const a = Math.abs(v);
+    if (v > 0) {
+      const g = Math.round(100 + 155 * a);
+      return `rgb(0,${Math.min(g,255)},100)`;
+    } else {
+      const r = Math.round(100 + 155 * a);
+      return `rgb(${Math.min(r,255)},0,50)`;
+    }
+  }
+
+  // header row
+  const empty = document.createElement('div'); empty.className='heatmap-label'; grid.appendChild(empty);
+  FIELDS.forEach(f => {
+    const d = document.createElement('div'); d.className='heatmap-label';
+    d.style.fontSize='11px'; d.style.fontWeight='700'; d.style.color='#7a8aaa';
+    d.textContent=f; grid.appendChild(d);
+  });
+
+  CORR_PEARSON.forEach((row, i) => {
+    const lbl = document.createElement('div'); lbl.className='heatmap-label';
+    lbl.style.color='#7a8aaa'; lbl.textContent=FIELDS[i]; grid.appendChild(lbl);
+    row.forEach((v, j) => {
+      const cell = document.createElement('div'); cell.className='heatmap-cell';
+      cell.style.background = color(v);
+      cell.style.color = Math.abs(v) > 0.5 ? '#fff' : '#ccc';
+      cell.textContent = v.toFixed(2);
+      cell.title = `${FIELDS[i]} × ${FIELDS[j]} = ${v.toFixed(3)}`;
+      grid.appendChild(cell);
+    });
+  });
+
+  wrap.appendChild(grid);
+})();
+
+// ── chart 3: radar ────────────────────────────────────────────────────────────
+(function(){
+  const radarLabels = FLABELS.map((l,i) => l + ' (' + FIELDS[i] + ')');
+  new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+      labels: radarLabels,
+      datasets: [
+        { label:'intact',  data:IG_MEANS.intact,  borderColor:'#2ecc71', backgroundColor:'#2ecc7122', pointBackgroundColor:'#2ecc71', pointRadius:3 },
+        { label:'partial', data:IG_MEANS.partial, borderColor:'#3498db', backgroundColor:'#3498db18', pointBackgroundColor:'#3498db', pointRadius:3 },
+        { label:'broken',  data:IG_MEANS.broken,  borderColor:'#e74c3c', backgroundColor:'#e74c3c18', pointBackgroundColor:'#e74c3c', pointRadius:3 },
+        { label:'absent',  data:IG_MEANS.absent,  borderColor:'#95a5a6', backgroundColor:'#95a5a618', pointBackgroundColor:'#95a5a6', pointRadius:3 },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales:{ r:{ min:0, max:10, ticks:{stepSize:2,color:'#6b7a99',font:{size:10},backdropColor:'transparent'},
+        grid:{color:'#1e2535'}, angleLines:{color:'#1e2535'},
+        pointLabels:{color:'#a8b8d8',font:{size:10}} } },
+      plugins:{legend:{labels:{color:'#a8b8d8',font:{size:11}}}}
+    }
+  });
+})();
+
+// ── archetype table ───────────────────────────────────────────────────────────
+(function(){
+  const tbody = document.getElementById('archTbody');
+  const igColors = { intact:'#2ecc71', partial:'#3498db', broken:'#e74c3c', absent:'#95a5a6' };
+  FIELDS.forEach((f, fi) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="color:#a8b8d8"><b>${f}</b> ${FLABELS[fi]}</td>` +
+      ['intact','partial','broken','absent'].map(ig => {
+        const v = IG_MEANS[ig][fi];
+        const bg = v >= 7 ? '#0d3320' : v >= 5 ? '#1a2a1a' : v <= 2 ? '#2a1010' : '#1a2030';
+        const col = v >= 7 ? '#2ecc71' : v >= 5 ? '#a8d8a0' : v <= 2 ? '#e74c3c' : '#a8b8d8';
+        return `<td><span class="sc" style="background:${bg};color:${col}">${v.toFixed(1)}</span></td>`;
+      }).join('');
+    tbody.appendChild(tr);
+  });
+})();
+
+// ── chart 4: reliability ──────────────────────────────────────────────────────
+(function(){
+  const colors = RELIABILITY_STD.map(v => v < 0.75 ? '#2ecc71' : v < 1.0 ? '#f39c12' : '#e74c3c');
+  new Chart(document.getElementById('reliabilityChart'), {
+    type: 'bar',
+    data: {
+      labels: FIELDS.map((f,i) => f + ' · ' + FLABELS[i]),
+      datasets: [{
+        label: '同一篇论文5次打分的标准差',
+        data: RELIABILITY_STD,
+        backgroundColor: colors,
+        borderColor: colors,
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive:true, indexAxis:'y',
+      scales:{
+        x:{min:0,max:1.5,ticks:{color:'#6b7a99'},grid:{color:'#1e2535'},
+          title:{display:true,text:'组内标准差（越小越可靠）',color:'#6b7a99'}},
+        y:{ticks:{color:'#a8b8d8',font:{size:12}},grid:{color:'#1e2535'}}
+      },
+      plugins:{
+        legend:{display:false},
+        annotation:{annotations:{line:{type:'line',xMin:0.75,xMax:0.75,borderColor:'#f39c1280',borderWidth:1,borderDash:[4,4]},
+          line2:{type:'line',xMin:1.0,xMax:1.0,borderColor:'#e74c3c80',borderWidth:1,borderDash:[4,4]}}}
+      }
+    }
+  });
+})();
+
+// ── chart 5: umap demo ────────────────────────────────────────────────────────
+(function(){
+  const ctx = document.getElementById('umapDemo').getContext('2d');
+  // illustrative scatter: two blobs representing intact vs partial
+  const rng = (seed) => { let s=seed; return ()=>{ s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; }; };
+  const rand = rng(42);
+  const pts = [];
+  // intact cluster: centroid ~(10.14, 8.22), spread 0.98
+  for(let i=0;i<120;i++) {
+    const a=rand()*2*Math.PI, r=rand()*1.5;
+    pts.push({x:10.14+Math.cos(a)*r*0.98, y:8.22+Math.sin(a)*r*0.98, ig:'intact'});
+  }
+  // partial cluster: centroid ~(6.17, 8.23), spread 1.77
+  for(let i=0;i<320;i++) {
+    const a=rand()*2*Math.PI, r=rand()*2.5;
+    pts.push({x:6.17+Math.cos(a)*r*1.77, y:8.23+Math.sin(a)*r*1.77, ig:'partial'});
+  }
+  // broken/absent smear
+  for(let i=0;i<80;i++) {
+    pts.push({x:3+rand()*4, y:3+rand()*4, ig:'broken'});
+    pts.push({x:1+rand()*5, y:1+rand()*5, ig:'absent'});
+  }
+
+  const colorMap = {intact:'#2ecc71',partial:'#3498db',broken:'#e74c3c',absent:'#95a5a6'};
+  new Chart(ctx, {
+    type:'scatter',
+    data:{datasets: ['intact','partial','broken','absent'].map(ig=>({
+      label:ig, pointRadius:3, pointHoverRadius:4,
+      backgroundColor: colorMap[ig]+'99',
+      data: pts.filter(p=>p.ig===ig).map(p=>({x:p.x,y:p.y}))
+    }))},
+    options:{
+      responsive:true,
+      scales:{
+        x:{ticks:{display:false},grid:{color:'#1e2535'},title:{display:true,text:'UMAP 维度1',color:'#6b7a99',font:{size:11}}},
+        y:{ticks:{display:false},grid:{color:'#1e2535'},title:{display:true,text:'UMAP 维度2',color:'#6b7a99',font:{size:11}}}
+      },
+      plugins:{legend:{labels:{color:'#a8b8d8',font:{size:11}}},
+        tooltip:{callbacks:{label:p=>`(${p.parsed.x.toFixed(1)}, ${p.parsed.y.toFixed(1)})`}}}
+    }
+  });
+})();
+</script>
+</body>
+</html>
