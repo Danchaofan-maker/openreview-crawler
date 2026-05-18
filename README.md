@@ -1,100 +1,110 @@
-# openreview-crawler
+# ml-theory-lens
 
-抓取多个机器学习会议/期刊的论文元数据,并基于摘要做数学严谨性粗筛,产出统一格式的候选集。
+**研究课题**：当代人工智能顶尖文献中严密数学推导占比的量化评估与基础数学工具聚类分析。
 
-## 目录结构
+---
+
+## 动机
+
+这个项目试图回答一个简单但在噪声里很难看清的问题：在每年涌入顶会的数万篇论文里，真正依赖严格数学工具进行论证的有多少，他们在用什么数学。
+
+我们悬置对具体应用场景和下游任务的讨论，只盯着推导链本身——不是"这篇论文解决了什么问题"，而是"这篇论文的结论是被证出来的还是被跑出来的"。最终目标是一份关于当代理论基础的量化图谱，能客观说明学界在探讨底层逻辑时最常依赖的数学分支，为我们自己的理论研究方向提供校准依据。
+
+---
+
+## 流水线
 
 ```
-openreview-crawler/
-├── scripts/          可重复运行的爬虫与筛选脚本
-├── explore/          一次性探索脚本(摸 API,不是正式代码)
-├── archive/          已废弃旧版本,留档备查
-├── data/
-│   ├── raw/          原始元数据,只写不改
-│   ├── filtered/     筛选后的候选集
-│   └── excluded/     已排除的来源/年份(留作对照)
-├── pyproject.toml    依赖清单(由 uv 管理)
-└── uv.lock
+01_collect/   →   02_score/   →   03_filter/   →   04_read/
+  爬取元数据       LLM 多维打分      规则筛选           浏览与标注
 ```
 
-## 环境
+### 01_collect — 数据入口
 
-- Python ≥ 3.10
-- 包管理: [uv](https://docs.astral.sh/uv/)
-- 工作目录建议放在 Linux 原生路径(避免 `/mnt/c/...` 跨系统读写慢且权限混乱)
+自动化爬取 ICLR / ICML / NeurIPS / TMLR / JMLR / COLT / SIOPT / SIMODS 的论文元数据，输出到 `data/raw/`。
+
+| 脚本 | 来源 | 输出 |
+|------|------|------|
+| `openreview_crawler.py` | ICLR / ICML / NeurIPS | `data/raw/<venue>_metadata.jsonl` |
+| `tmlr_crawler.py` | TMLR | `data/raw/tmlr_metadata.jsonl` |
+| `jmlr_crawler.py` | JMLR | `data/raw/jmlr_metadata.jsonl` |
+| `colt_crawler.py` | COLT | `data/raw/colt_metadata.jsonl` |
+| `journal_crawler.py` | JMLR / SIMODS / SIOPT | `data/raw/{jmlr,simods,siopt}_metadata.jsonl` |
+
+统一元数据字段：`paper_id` / `arxiv_id` / `venue` / `title` / `abstract` / `authors` / `year` / `doi` / `crawled_at`
+
+### 02_score — LLM 多维打分
+
+用 DeepSeek V4-Pro（prompt v0.8）对摘要做 9 个维度的打分，同时生成逻辑链分析。当前已完成全量 ~31k 篇的评分（`data/full/output.jsonl`，108MB）。
+
+**评分维度**（0–10）：
+
+| 字段 | 含义 |
+|------|------|
+| `mr` | 数学严谨度 |
+| `tn` | 理论新颖度 |
+| `md` | 数学深度 |
+| `ar` | 假设现实度 |
+| `er` | 经验验证依赖度 |
+| `tea` | 理论实验咬合度 |
+| `cc` | 算力门槛 |
+| `ei` | 认识论意图 |
+| `sg` | 适用范围广度 |
+| `cs` | 置信度（模型自评） |
+
+**逻辑链完整性**（`ig`）：`intact` / `partial` / `broken` / `absent`
+
+关键发现：intact 论文占比从 2024 年的 12.9% 单调下降至 2026 年的 7.3%，绝对产量接近饱和（~1,100 篇/年）——供给端受限于人，不受工具加速影响。
+
+### 03_filter — 规则筛选
+
+从打分结果中按规则集筛出精读语料库（目标 1,000–2,000 篇）。每个人维护自己的规则文件，最终取交集。
+
+- `03_filter/rules/rules_claude.json` — Claude 的规则集，当前产出 2,354 篇
+- `03_filter/rules/rules_jes.json` — jes 的规则集（待写）
+- `03_filter/rules/rules_danchaofan.json` — danchaofan 的规则集（待写）
+
+规则格式见任意现有 JSON 文件，可直接在 `04_read/` 前端的 preset 下拉里加载预览效果。
+
+**待完成**：基于 `03_filter/distribution_conclusions.json` 的分布分析结论，优化各规则集阈值；对精读语料库做数学工具聚类（第三阶段）。
+
+### 04_read — 浏览与标注
+
+本地 HTTP 服务器 + 单页前端，支持规则预览、收藏、双盲打分。
 
 ```bash
-uv sync                       # 按 pyproject.toml + uv.lock 还原环境
-uv run scripts/<某脚本>.py    # 在虚拟环境内运行
+uv run 04_read/serve.py
+# 浏览器打开 http://localhost:8080
 ```
 
-## 数据来源与脚本
+---
 
-每个脚本独立运行,输出固定路径,新增来源只需在此表格追加一行。
-
-| 脚本 | 来源 | 范围 | 抓取方式 | 输出 |
-|---|---|---|---|---|
-| `scripts/openreview_crawler.py` | ICLR / ICML / NeurIPS | 2023–2026(见脚本 `VENUES`) | OpenReview API | `data/raw/<venue>_metadata.jsonl` |
-| `scripts/tmlr_crawler.py` | TMLR | `pdate >= 2024-01-01` | OpenReview API | `data/raw/tmlr_metadata.jsonl` |
-| `scripts/jmlr_crawler.py` | JMLR | v25(2024)、v26(2025) | jmlr.org HTML | `data/raw/jmlr_metadata.jsonl` |
-| `scripts/colt_crawler.py` | COLT | v247(2024)、v291(2025) | PMLR HTML | `data/raw/colt_metadata.jsonl` |
-| `scripts/journal_crawler.py` | JMLR / SIMODS / SIOPT | 2024-01-01 起 | OpenAlex API | `data/raw/{jmlr,simods,siopt}_metadata.jsonl` |
-| `scripts/math_filter.py` | — | 读 `data/raw/*.jsonl` | 关键词打分 | `data/filtered/math_candidates.jsonl` + `math_filter_stats.json` |
-
-> `journal_crawler.py` 支持参数选择期刊: `uv run scripts/journal_crawler.py simods siopt`(不传参则全跑)。
-
-## 统一元数据字段
-
-所有 `data/raw/*.jsonl` 写入同一套字段,便于后续合并/筛选:
-
-| 字段 | 说明 |
-|---|---|
-| `paper_id` | 内部 ID(OpenReview note id / `pmlr-vNNN-xxx` / `jmlr-vNN-xxx` / OpenAlex work id) |
-| `arxiv_id` | arXiv ID,无则 `null` |
-| `venue` | 来源标识(`ICLR_2024` / `TMLR` / `COLT_2025` / `JMLR` / ...) |
-| `decision_track` | OpenReview 会议: `Oral` / `Spotlight` / `Poster` / `null`;其他来源固定 `null` |
-| `title`, `abstract`, `authors` | 原始字段,作者用 `; ` 分隔 |
-| `year` | 发表/接收年份(部分来源可缺) |
-| `doi` | 仅 OpenAlex 来源稳定提供 |
-| `crawled_at` | 抓取时间(ISO 8601) |
-
-新增来源时,请保持字段一致;新增字段请同步本表。
-
-## 数学严谨性筛选
-
-`scripts/math_filter.py` 读取 `data/raw/` 下所有 `*.jsonl`,按摘要+标题文本做关键词打分:
-
-- 强信号(+3): `theorem` / `lemma` / `proof` / `convergence rate` / `regret bound` / `np-hard` 等
-- 中等信号(+1): `lower bound` / `minimax` / `convex` / `hilbert` / `measure theory` 等
-- 弱信号(≥2 个才 +1): `algorithm` / `optimization` / `estimator` 等
-
-输出:
-- `data/filtered/math_candidates.jsonl` — `score >= 3` 的候选,附 `math_score` 与命中模式 `math_hits`
-- `data/filtered/math_filter_stats.json` — 各来源的总数与不同阈值通过数
-
-阈值与模式集中在脚本顶部 `STRONG_PATTERNS` / `MEDIUM_PATTERNS` / `WEAK_PATTERNS`,需要调整直接改这三个列表。
-
-## 典型流程
+## 快速开始
 
 ```bash
-# 1. 拉取各来源(可分别运行,互不影响)
-uv run scripts/openreview_crawler.py
-uv run scripts/tmlr_crawler.py
-uv run scripts/jmlr_crawler.py
-uv run scripts/colt_crawler.py
-uv run scripts/journal_crawler.py
+# 环境
+uv sync
 
-# 2. 合并筛选
-uv run scripts/math_filter.py
+# 从头跑（已有 data/raw/ 可跳过第一步）
+uv run 01_collect/openreview_crawler.py
+uv run 02_score/score_paper_c3.py
+
+# 直接浏览已有全量结果
+uv run 04_read/serve.py
 ```
 
-## 维护约定
+---
 
-- **`data/raw/` 只增不改**:重新抓取直接覆盖整个 `*.jsonl` 文件,不在原文件上手工编辑。
-- **排除某来源**:把对应 `*.jsonl` 移到 `data/excluded/`(例:`colt_pre2024_metadata.jsonl`),`math_filter.py` 自然不会读到。
-- **废弃旧脚本**:移到 `archive/`,不直接删除,便于追溯当时方案。
-- **新增爬虫的最小步骤**:
-  1. 在 `scripts/` 下新建脚本,输出 `data/raw/<source>_metadata.jsonl`,字段对齐上表。
-  2. 在本 README 的"数据来源与脚本"表格追加一行。
-  3. 不需要改 `math_filter.py`(它自动遍历 `data/raw/*.jsonl`)。
-- **依赖变更**:用 `uv add <pkg>` / `uv remove <pkg>`,不要手改 `pyproject.toml` 后忘记更新 `uv.lock`。
+## 数据约定
+
+- `data/raw/` 只增不改，重新抓取直接覆盖整个文件
+- `data/full/output.jsonl` 是全量打分结果，不手工编辑
+- 废弃脚本移到对应子目录的 `deprecated/`，不直接删除
+
+---
+
+## ourinsights/
+
+横跨流水线的观察和判断放这里，不属于任何单一阶段。当前：
+
+- `market_structure_notes.md` — 投稿量 delta/gamma 分析，intact 供给端饱和假说，时间窗口判断
