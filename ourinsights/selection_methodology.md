@@ -99,10 +99,55 @@ final = argsort(mean_rank)[:target_n]
 
 ---
 
+## FLD 的循环逻辑问题与 PCA 修正
+
+### FLD 给 ig 双重权重
+
+FLD 方向由 intact/absent 质心差定义 → intact/absent 本身就是 ig 字段 → 结果 FLD ≈ mr 的加权版（mr 权重 0.70）。规则层已经用 ig 过滤，排名层又通过 FLD 间接再用一次 ig，是双重惩罚。
+
+更根本的问题：过滤后的子集里 ig 的区分力已经失效（absent 几乎被清空）。在这个子集里，**真正有区分力的是 tn、md、er，以及独立于主轴的 ar 和 ei**。
+
+### PCA 揭示的维度结构
+
+对过滤后 6,244 篇做 PCA（标准化后 SVD）：
+
+```
+PC1  57.6%  → mr/tn/md/sg/ei 混合轴（"数学严格度"）
+PC2  13.4%  → ar 单独（assumption_realism，完全独立）
+PC3  10.7%  → ei 单独（epistemological_intent，完全独立）
+PC4   6.7%  → sg 单独（scope_generality）
+```
+
+**关键发现**：mr/tn/md 两两相关 0.75–0.81，在 PCA 里合并成同一主成分。FLD 给这三个维度各自赋权，等于把同一件事算了三遍。ar 和 ei 是真正独立的信息轴，FLD 对它们低估。
+
+### PCA 排名的问题
+
+直接用 PCA 分排名，ar/ei 高的论文（如认知架构综述，ig=absent，mr=0）会排进前列。PCA 的独立轴对"有没有数学骨架"不敏感，会引入我们不想要的论文。
+
+### 组合方案
+
+```
+combined = 0.7 × norm(fld) + 0.3 × norm(pca)
+```
+
+- FLD 守住数学严格度（主体）
+- PCA 补 ar/ei 维度的多样性（修正 FLD 对独立轴的低估）
+
+结果（1500篇，λ=0.5，100次 Monte Carlo）：
+- 与纯 FLD 重叠 **91.3%**——主体结构保留
+- 新增 **130篇**（纯 FLD 漏掉的）——主要特征：ei 高，认识论意图强，偏理论基础导向
+- 典型新增：可解释性复杂度、等变网络、量子算法鲁棒性
+
+最终语料库：`03_filter/combined_corpus.jsonl`
+
+---
+
 ## TODO
 
 - [x] 实现 FLD 权重计算
 - [x] 实现 MMR 选择脚本（`03_filter/mmr_select.py`）
 - [x] 加入 Monte Carlo ensemble（N=100，joblib 并行，~30s on 32 cores）
+- [x] PCA 分析揭示维度冗余，设计组合评分（FLD×0.7 + PCA×0.3）
+- [x] 生成最终语料库 combined_corpus.jsonl（1500篇）
 - [ ] 确定 λ（当前 0.5，人工浏览语料库后调整）
 - [ ] 与 danchaofan 的 rules 合并后重新跑
