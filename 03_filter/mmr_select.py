@@ -50,9 +50,15 @@ def _eval_cond(p, c):
 
 def _eval_rule(p, rule):
     results = [_eval_cond(p, c) for c in rule.get("conditions", [])]
-    results = [r for r in results if r is not None]
-    if not results: return False
-    hit = all(results) if rule.get("internal_logic", "AND") == "AND" else any(results)
+    logic = rule.get("internal_logic", "AND")
+    if logic == "AND":
+        # None = field missing = condition not satisfied = breaks AND
+        resolved = [False if r is None else r for r in results]
+    else:
+        # OR: None = field missing = doesn't contribute
+        resolved = [r for r in results if r is not None]
+    if not resolved: return False
+    hit = all(resolved) if logic == "AND" else any(resolved)
     return (not hit) if rule.get("negate") else hit
 
 def apply_rules(papers, cfg):
