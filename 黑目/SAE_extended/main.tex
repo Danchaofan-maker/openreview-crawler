@@ -306,7 +306,7 @@ $\rho(\Dict_1, \Dict_2; \tau) \to 1$ 当样本规模 $n \to \infty$。
 \begin{proof}[证明（草图）]
 SAE 的训练目标
 \[
-J(\theta,\phi) := \mathbb{E}_\X\big[\norm{\X - h_\phi(f_\theta(\X))}^2\big] + \lambda \mathbb{E}_\X[\norm{f_\theta(\X)}_1]
+J(\theta,\phi) := \mathbb{E}_{\X}\big[\norm{\X - h_\phi(f_\theta(\X))}^2\big] + \lambda \mathbb{E}_{\X}[\norm{f_\theta(\X)}_1]
 \]
 在 $L \geq N$、$f_\theta$ 表达能力充足条件下，
 其在 $\lambda \to 0^+$ 极限下的最优解 $f_\theta^\ast$ 必将 $\X$ 映射至与 $\Z$ 在排列-缩放意义下相同的稀疏表示——
@@ -861,7 +861,7 @@ SAE 字典作为一族解的代表元，其稳定成分（跨种子重合的 30\
 $\Theta(k \log(N/k))$。设 $C_0 = \max(0, 1 - M/(k\log(N/k)))$。
 则 $\R^L$ 中存在比例至少 $C_0$ 的 $k$ 稀疏码 $\Z^\ast$，
 使任何线性编码器 $\W_e$ 满足
-$\Pr_\X[f_\theta(\X) = \Z^\ast] = 0$。
+$\Pr_{\X}[f_\theta(\X) = \Z^\ast] = 0$。
 记该集合为 $\mathcal{F}_0$，$|\mathcal{F}_0|/|\mathcal{F}| \geq C_0$
 （$\mathcal{F}$ 为全部 $k$ 稀疏码）。
 
