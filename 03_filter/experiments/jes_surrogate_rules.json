@@ -1,0 +1,361 @@
+{
+  "note": "Explanatory surrogate rules for Jes final. Derived features are not supported by apply_rules; use as analysis artifact.",
+  "metrics": {
+    "kept": 1829.0,
+    "tp": 1176.0,
+    "fp": 653.0,
+    "fn": 324.0,
+    "precision": 0.6429743028977584,
+    "recall": 0.784,
+    "f1": 0.7065184740162211
+  },
+  "rules": [
+    {
+      "name": "tree_222_leaf_189",
+      "own_metrics": {
+        "kept": 846,
+        "hit": 549,
+        "fp": 297,
+        "precision": 0.648936170212766,
+        "recall": 0.366
+      },
+      "conditions": [
+        "cluster_center_dist > 1.17",
+        "er <= 3.28",
+        "mr > 6.84"
+      ]
+    },
+    {
+      "name": "tree_034_leaf_156",
+      "own_metrics": {
+        "kept": 395,
+        "hit": 300,
+        "fp": 95,
+        "precision": 0.759493670886076,
+        "recall": 0.2
+      },
+      "conditions": [
+        "jes_prefilter = true",
+        "marketing = false",
+        "cluster_center_dist > 1.42",
+        "ei <= 8.68",
+        "md > 4.15",
+        "pca_norm > 0.344"
+      ]
+    },
+    {
+      "name": "tree_628_leaf_17",
+      "own_metrics": {
+        "kept": 70,
+        "hit": 51,
+        "fp": 19,
+        "precision": 0.7285714285714285,
+        "recall": 0.034
+      },
+      "conditions": [
+        "integrity != intact",
+        "jes_prefilter = true",
+        "combined_score > 0.263",
+        "fld_norm <= 0.563",
+        "mr <= 6.61",
+        "pca_norm > 0.471"
+      ]
+    },
+    {
+      "name": "tree_692_leaf_93",
+      "own_metrics": {
+        "kept": 367,
+        "hit": 253,
+        "fp": 114,
+        "precision": 0.6893732970027248,
+        "recall": 0.16866666666666666
+      },
+      "conditions": [
+        "integrity != absent",
+        "jes_prefilter = true",
+        "tea_missing = true",
+        "fld_norm > 0.801"
+      ]
+    },
+    {
+      "name": "tree_082_leaf_136",
+      "own_metrics": {
+        "kept": 209,
+        "hit": 175,
+        "fp": 34,
+        "precision": 0.8373205741626795,
+        "recall": 0.11666666666666667
+      },
+      "conditions": [
+        "integrity != partial",
+        "jes_prefilter = true",
+        "cluster_center_dist > 1.28",
+        "cluster_log_size <= 5.85",
+        "combined_score > 0.629",
+        "er > 2.52",
+        "pca_norm > 0.481"
+      ]
+    },
+    {
+      "name": "tree_433_leaf_58",
+      "own_metrics": {
+        "kept": 92,
+        "hit": 61,
+        "fp": 31,
+        "precision": 0.6630434782608695,
+        "recall": 0.04066666666666666
+      },
+      "conditions": [
+        "integrity = intact",
+        "jes_prefilter = true",
+        "tea_missing = false",
+        "cluster_center_dist > 1.76",
+        "tn <= 7.99"
+      ]
+    },
+    {
+      "name": "tree_377_leaf_154",
+      "own_metrics": {
+        "kept": 183,
+        "hit": 115,
+        "fp": 68,
+        "precision": 0.6284153005464481,
+        "recall": 0.07666666666666666
+      },
+      "conditions": [
+        "integrity = partial",
+        "jes_prefilter = true",
+        "cluster_center_dist > 1.3",
+        "cluster_log_size <= 6.03",
+        "er > 2.25",
+        "fld_norm > 0.544",
+        "tea <= 6.89"
+      ]
+    },
+    {
+      "name": "tree_749_leaf_109",
+      "own_metrics": {
+        "kept": 28,
+        "hit": 25,
+        "fp": 3,
+        "precision": 0.8928571428571429,
+        "recall": 0.016666666666666666
+      },
+      "conditions": [
+        "human_review = true",
+        "cluster_center_dist > 2.12",
+        "combined_score > 0.26",
+        "pca_norm <= 0.556"
+      ]
+    },
+    {
+      "name": "tree_036_leaf_128",
+      "own_metrics": {
+        "kept": 72,
+        "hit": 56,
+        "fp": 16,
+        "precision": 0.7777777777777778,
+        "recall": 0.037333333333333336
+      },
+      "conditions": [
+        "jes_prefilter = true",
+        "tea_missing = false",
+        "cluster_center_dist > 1.11",
+        "combined_score > 0.558",
+        "cs > 7.11",
+        "fld_norm > 0.656",
+        "7.55 < mr <= 8.45",
+        "sg <= 6.77"
+      ]
+    },
+    {
+      "name": "tree_211_leaf_29",
+      "own_metrics": {
+        "kept": 58,
+        "hit": 46,
+        "fp": 12,
+        "precision": 0.7931034482758621,
+        "recall": 0.030666666666666665
+      },
+      "conditions": [
+        "integrity in ['intact', 'partial']",
+        "jes_prefilter = true",
+        "marketing = false",
+        "cluster_center_dist <= 1.67",
+        "mr > 8.05",
+        "sg <= 9.35",
+        "tea > -0.302"
+      ]
+    },
+    {
+      "name": "tree_360_leaf_122",
+      "own_metrics": {
+        "kept": 186,
+        "hit": 143,
+        "fp": 43,
+        "precision": 0.7688172043010753,
+        "recall": 0.09533333333333334
+      },
+      "conditions": [
+        "integrity = intact",
+        "cc <= 1.76",
+        "cluster_center_dist > 0.91",
+        "cluster_log_size <= 5.21"
+      ]
+    },
+    {
+      "name": "tree_081_leaf_83",
+      "own_metrics": {
+        "kept": 37,
+        "hit": 30,
+        "fp": 7,
+        "precision": 0.8108108108108109,
+        "recall": 0.02
+      },
+      "conditions": [
+        "integrity != intact",
+        "jes_prefilter = true",
+        "marketing = false",
+        "cluster_center_dist > 0.814",
+        "cluster_log_size <= 4.73",
+        "ei > 5.12",
+        "er <= 7.66",
+        "tn <= 8.95"
+      ]
+    },
+    {
+      "name": "tree_717_leaf_131",
+      "own_metrics": {
+        "kept": 67,
+        "hit": 45,
+        "fp": 22,
+        "precision": 0.6716417910447762,
+        "recall": 0.03
+      },
+      "conditions": [
+        "integrity = intact",
+        "cc > 0.698",
+        "cluster_log_size <= 5.55",
+        "cs > 7.24",
+        "mr <= 8.84",
+        "0.728 < pca_norm <= 0.8"
+      ]
+    },
+    {
+      "name": "tree_628_leaf_56",
+      "own_metrics": {
+        "kept": 44,
+        "hit": 34,
+        "fp": 10,
+        "precision": 0.7727272727272727,
+        "recall": 0.02266666666666667
+      },
+      "conditions": [
+        "integrity != intact",
+        "fld_norm > 0.563",
+        "md <= 4.75",
+        "mr > 7.64"
+      ]
+    },
+    {
+      "name": "tree_876_leaf_124",
+      "own_metrics": {
+        "kept": 41,
+        "hit": 28,
+        "fp": 13,
+        "precision": 0.6829268292682927,
+        "recall": 0.018666666666666668
+      },
+      "conditions": [
+        "integrity = intact",
+        "1.04 < cluster_center_dist <= 1.65",
+        "cs <= 8.08",
+        "er > 1.25",
+        "0.621 < fld_norm <= 0.818",
+        "pca_norm <= 0.646",
+        "sg > 6.5"
+      ]
+    },
+    {
+      "name": "tree_079_leaf_77",
+      "own_metrics": {
+        "kept": 51,
+        "hit": 36,
+        "fp": 15,
+        "precision": 0.7058823529411765,
+        "recall": 0.024
+      },
+      "conditions": [
+        "integrity = intact",
+        "jes_prefilter = true",
+        "0.839 < cluster_center_dist <= 2.15",
+        "cluster_log_size > 5.3",
+        "combined_score > 0.374",
+        "er > 0.57",
+        "mr > 7.67",
+        "sg <= 7.19",
+        "tn <= 6.86"
+      ]
+    },
+    {
+      "name": "tree_190_leaf_115",
+      "own_metrics": {
+        "kept": 56,
+        "hit": 42,
+        "fp": 14,
+        "precision": 0.75,
+        "recall": 0.028
+      },
+      "conditions": [
+        "jes_prefilter = true",
+        "tea_missing = true",
+        "ar > 1.94",
+        "cluster_center_dist > 1.19",
+        "combined_score > 0.221",
+        "cs > 7.34",
+        "mr <= 7.13",
+        "sg > 6.05"
+      ]
+    },
+    {
+      "name": "tree_604_leaf_108",
+      "own_metrics": {
+        "kept": 39,
+        "hit": 26,
+        "fp": 13,
+        "precision": 0.6666666666666666,
+        "recall": 0.017333333333333333
+      },
+      "conditions": [
+        "integrity != intact",
+        "ar <= 6.5",
+        "cluster_center_dist > 1.08",
+        "cs > 7.52",
+        "er > 1.9",
+        "fld_norm > 0.71",
+        "md > 6.62",
+        "mr > 4.81",
+        "pca_norm > 0.472"
+      ]
+    },
+    {
+      "name": "tree_571_leaf_94",
+      "own_metrics": {
+        "kept": 39,
+        "hit": 30,
+        "fp": 9,
+        "precision": 0.7692307692307693,
+        "recall": 0.02
+      },
+      "conditions": [
+        "integrity != absent",
+        "jes_prefilter = true",
+        "ar > 3.28",
+        "combined_score <= 0.841",
+        "ei > 8.04",
+        "0.376 < pca_norm <= 0.685",
+        "tea <= 4.63"
+      ]
+    }
+  ]
+}

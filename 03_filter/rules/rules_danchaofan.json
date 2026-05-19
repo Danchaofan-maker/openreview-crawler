@@ -71,6 +71,11 @@
       "internal_logic": "AND",
       "conditions": [
         {
+          "field": "er",
+          "op": "gt",
+          "value": 4
+        },
+        {
           "field": "tea",
           "op": "lt",
           "value": 6.5

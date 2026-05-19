@@ -1,0 +1,164 @@
+{
+  "inter_logic": "OR",
+  "force_keep_hr": false,
+  "keep_na": true,
+  "rescue_rules": [
+    {
+      "name": "rescue_high_depth_math_main_signal_underestimates",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "integrity", "op": "in", "value": ["intact", "partial"]},
+        {"field": "md", "op": "gte", "value": 7.5},
+        {"field": "mr", "op": "gte", "value": 6.5},
+        {"field": "tn", "op": "gte", "value": 6},
+        {"field": "er", "op": "lte", "value": 4.5},
+        {"field": "marketing", "op": "eq", "value": false}
+      ]
+    },
+    {
+      "name": "rescue_theoretical_novelty_outlier",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "integrity", "op": "in", "value": ["intact", "partial"]},
+        {"field": "tn", "op": "gte", "value": 8.5},
+        {"field": "mr", "op": "gte", "value": 6.5},
+        {"field": "md", "op": "gte", "value": 4.5},
+        {"field": "er", "op": "lte", "value": 4.5},
+        {"field": "marketing", "op": "eq", "value": false}
+      ]
+    },
+    {
+      "name": "rescue_classical_rigorous_theory_moderate_depth",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "integrity", "op": "in", "value": ["intact", "partial"]},
+        {"field": "mr", "op": "gte", "value": 8},
+        {"field": "tn", "op": "gte", "value": 7},
+        {"field": "md", "op": "gte", "value": 4},
+        {"field": "er", "op": "lte", "value": 5},
+        {"field": "marketing", "op": "eq", "value": false}
+      ]
+    },
+    {
+      "name": "rescue_pure_explanatory_theory",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "integrity", "op": "in", "value": ["intact", "partial"]},
+        {"field": "ei", "op": "gte", "value": 8.5},
+        {"field": "mr", "op": "gte", "value": 6.5},
+        {"field": "tn", "op": "gte", "value": 6.5},
+        {"field": "md", "op": "gte", "value": 4.5},
+        {"field": "er", "op": "lte", "value": 4},
+        {"field": "marketing", "op": "eq", "value": false}
+      ]
+    },
+    {
+      "name": "rescue_broad_scope_theory",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "integrity", "op": "in", "value": ["intact", "partial"]},
+        {"field": "sg", "op": "gte", "value": 8.5},
+        {"field": "mr", "op": "gte", "value": 6.5},
+        {"field": "tn", "op": "gte", "value": 6.5},
+        {"field": "md", "op": "gte", "value": 4.5},
+        {"field": "er", "op": "lte", "value": 4.5},
+        {"field": "marketing", "op": "eq", "value": false}
+      ]
+    },
+    {
+      "name": "rescue_realistic_assumption_theory",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "integrity", "op": "in", "value": ["intact", "partial"]},
+        {"field": "ar", "op": "gte", "value": 8},
+        {"field": "mr", "op": "gte", "value": 7},
+        {"field": "tn", "op": "gte", "value": 6.5},
+        {"field": "md", "op": "gte", "value": 4.5},
+        {"field": "er", "op": "lte", "value": 4},
+        {"field": "marketing", "op": "eq", "value": false}
+      ]
+    },
+    {
+      "name": "rescue_human_review_strong_theory_only",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "human_review", "op": "eq", "value": true},
+        {"field": "integrity", "op": "in", "value": ["intact", "partial"]},
+        {"field": "mr", "op": "gte", "value": 6.5},
+        {"field": "tn", "op": "gte", "value": 6.5},
+        {"field": "md", "op": "gte", "value": 5},
+        {"field": "er", "op": "lte", "value": 5}
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "name": "exclude_absent_or_broken_logic_chain",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "integrity", "op": "in", "value": ["absent", "broken"]}
+      ]
+    },
+    {
+      "name": "exclude_marketing_packaged_math",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "marketing", "op": "eq", "value": true}
+      ]
+    },
+    {
+      "name": "exclude_below_precision_rigor_floor",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "mr", "op": "lt", "value": 7.5}
+      ]
+    },
+    {
+      "name": "exclude_low_theoretical_novelty_for_core_set",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "tn", "op": "lt", "value": 7}
+      ]
+    },
+    {
+      "name": "exclude_shallow_math_tooling_for_core_set",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "md", "op": "lt", "value": 5.5}
+      ]
+    },
+    {
+      "name": "exclude_experiment_driven_claims",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "conditions": [
+        {"field": "er", "op": "gt", "value": 4}
+      ]
+    }
+  ]
+}

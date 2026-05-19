@@ -1,155 +1,87 @@
 {
   "inter_logic": "OR",
-  "force_keep_hr": true,
+  "force_keep_hr": false,
+  "keep_na": true,
+  "rescue_rules": [
+    {
+      "name": "rescue_partial_高理论新颖度：tn>=8且mr>=5",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "_rationale": "partial论文中最常见的有价值情形：推导链条不完整（partial）但理论贡献本身是首次形式化或首次给出紧致结果（tn>=8）。要求mr>=5以过滤仅靠炒作推高tn评分的情形——打出tn>=8但mr<5意味着评分体系内部矛盾，更可能是噪声。",
+      "conditions": [
+        {"field": "integrity", "op": "eq", "value": "partial"},
+        {"field": "tn", "op": "gte", "value": 8},
+        {"field": "mr", "op": "gte", "value": 5}
+      ]
+    },
+    {
+      "name": "rescue_partial_深度数学工具：md>=8且mr>=5",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "_rationale": "某些partial论文使用了前沿或高度专门化的数学工具（代数拓扑、算子谱理论、随机矩阵理论等），即使证明骨架不完整，其数学工具本身代表了语料库在数学广度上的稀缺样本。md>=8意味着工具处于成熟数学分支的前沿活跃区，具备独立阅读价值。mr>=5确保不是纯装饰性引用。",
+      "conditions": [
+        {"field": "integrity", "op": "eq", "value": "partial"},
+        {"field": "md", "op": "gte", "value": 8},
+        {"field": "mr", "op": "gte", "value": 5}
+      ]
+    },
+    {
+      "name": "rescue_partial_纯解析型论文：mr>=6且ei>=8且er<=2",
+      "enabled": true,
+      "negate": false,
+      "internal_logic": "AND",
+      "_rationale": "认识论意图（ei>=8）为'纯解剖'的partial论文——其目标是刻画已有方法的数学性质而非构造新算法——配合er<=2（不依赖数值实验）和mr>=6（有实质性数学推导），构成一类有价值但被主信号（mr/tn/md）系统性低估的类型。这类论文通常用泛函分析或谱理论分析已有模型的极限性质，推导不完整但方向是理论分析。",
+      "conditions": [
+        {"field": "integrity", "op": "eq", "value": "partial"},
+        {"field": "mr", "op": "gte", "value": 6},
+        {"field": "ei", "op": "gte", "value": 8},
+        {"field": "er", "op": "lte", "value": 2}
+      ]
+    }
+  ],
   "rules": [
     {
-      "id": "cl-r1",
-      "name": "逻辑链缺失或断裂",
+      "name": "排除absent：完全无形式化论断的论文",
       "enabled": true,
       "negate": false,
       "internal_logic": "AND",
+      "_rationale": "ig=absent意味着论文无任何形式化论断——纯工程实现、纯数据集构建、纯benchmark比较。这类论文与'结论被证出来'的目标完全不相关，是最清晰的噪声信号，应无条件排除。absent占总量38%，是最大的噪声来源。",
       "conditions": [
-        {
-          "id": "cl-r1-c1",
-          "field": "integrity",
-          "op": "in",
-          "value": ["absent", "broken"]
-        }
+        {"field": "integrity", "op": "eq", "value": "absent"}
       ]
     },
     {
-      "id": "cl-r2",
-      "name": "数学严谨度地板",
+      "name": "排除broken：逻辑链有明显断层的论文",
       "enabled": true,
       "negate": false,
       "internal_logic": "AND",
+      "_rationale": "ig=broken意味着论文声称有形式化论证但前提→工具→推导→结论之间存在无法弥合的逻辑断层（前提弱、结论强、推导不连贯）。这类论文比absent更危险——它们用数学符号制造了严密性的假象，但实际上'结论未被证出来'。broken论文的mr均值（2.0）与absent（1.1）几乎不可区分，说明断层是系统性的，不是个例。",
       "conditions": [
-        {
-          "id": "cl-r2-c1",
-          "field": "mr",
-          "op": "lt",
-          "value": 3.0
-        }
+        {"field": "integrity", "op": "eq", "value": "broken"}
       ]
     },
     {
-      "id": "cl-r3",
-      "name": "理论新颖度入场券",
+      "name": "排除partial低严密度：ig=partial且mr<8",
       "enabled": true,
       "negate": false,
       "internal_logic": "AND",
+      "_rationale": "partial论文的推导链条不完整，价值取决于现有部分的严密程度。mr<8意味着推导质量低于'泛用型理论框架（mr=8）'——即使部分推导合法，其理论贡献也不足以支撑精读的时间成本。此规则通过三条rescue规则精确召回其中确有价值的子集（高novelty、深度数学工具、纯解析型），不会系统性损失多样性。mr的双峰谷值在4.0附近，8.0是更保守的理论质量门槛。",
       "conditions": [
-        {
-          "id": "cl-r3-c1",
-          "field": "tn",
-          "op": "lt",
-          "value": 7.0
-        }
+        {"field": "integrity", "op": "eq", "value": "partial"},
+        {"field": "mr", "op": "lt", "value": 8}
       ]
     },
     {
-      "id": "cl-r4",
-      "name": "营销包装且新颖度不足",
+      "name": "排除intact低严密度：ig=intact且mr<8",
       "enabled": true,
       "negate": false,
       "internal_logic": "AND",
+      "_rationale": "intact意味着四链完整耦合，但这不等于数学推导质量高。mr=7对应'特定算法类理论剖析，产出为定理'，价值确实存在，但全量intact mr>=7有2320篇，超出目标上限。保留intact mr>=8（907篇）确保语料库的理论严密性基准，兼顾partial rescue规则捕捉其他类型的理论价值，总量控制在目标范围内。mr<8的intact论文（含anomaly评分和较弱理论）被此规则排除。",
       "conditions": [
-        {
-          "id": "cl-r4-c1",
-          "field": "marketing",
-          "op": "eq",
-          "value": true
-        },
-        {
-          "id": "cl-r4-c2",
-          "field": "tn",
-          "op": "lt",
-          "value": 6.0
-        }
-      ]
-    },
-    {
-      "id": "cl-r5",
-      "name": "partial 链需要极高严谨度背书",
-      "enabled": true,
-      "negate": false,
-      "internal_logic": "AND",
-      "conditions": [
-        {
-          "id": "cl-r5-c1",
-          "field": "integrity",
-          "op": "eq",
-          "value": "partial"
-        },
-        {
-          "id": "cl-r5-c2",
-          "field": "mr",
-          "op": "lt",
-          "value": 8.5
-        }
-      ]
-    },
-    {
-      "id": "cl-r6",
-      "name": "intact 链需要基础严谨度",
-      "enabled": true,
-      "negate": false,
-      "internal_logic": "AND",
-      "conditions": [
-        {
-          "id": "cl-r6-c1",
-          "field": "integrity",
-          "op": "eq",
-          "value": "intact"
-        },
-        {
-          "id": "cl-r6-c2",
-          "field": "mr",
-          "op": "lt",
-          "value": 6.0
-        }
-      ]
-    },
-    {
-      "id": "cl-r7",
-      "name": "理论-实验脱节（高实验依赖但咬合极差）",
-      "enabled": true,
-      "negate": false,
-      "internal_logic": "AND",
-      "conditions": [
-        {
-          "id": "cl-r7-c1",
-          "field": "er",
-          "op": "gte",
-          "value": 7.5
-        },
-        {
-          "id": "cl-r7-c2",
-          "field": "tea",
-          "op": "lt",
-          "value": 4.0
-        }
-      ]
-    },
-    {
-      "id": "cl-r8",
-      "name": "高算力门槛且迁移范围极窄",
-      "enabled": true,
-      "negate": false,
-      "internal_logic": "AND",
-      "conditions": [
-        {
-          "id": "cl-r8-c1",
-          "field": "cc",
-          "op": "gte",
-          "value": 8.0
-        },
-        {
-          "id": "cl-r8-c2",
-          "field": "sg",
-          "op": "lt",
-          "value": 3.0
-        }
+        {"field": "integrity", "op": "eq", "value": "intact"},
+        {"field": "mr", "op": "lt", "value": 8}
       ]
     }
   ]
