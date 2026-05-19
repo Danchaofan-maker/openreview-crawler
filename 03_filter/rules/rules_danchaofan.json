@@ -128,13 +128,6 @@
       "enabled": true,
       "negate": false,
       "internal_logic": "AND",
-      "conditions": []
-    },
-    {
-      "name": "新规则",
-      "enabled": true,
-      "negate": false,
-      "internal_logic": "AND",
       "conditions": [
         {
           "field": "er",

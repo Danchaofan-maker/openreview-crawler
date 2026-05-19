@@ -58,22 +58,52 @@
 
 ### 03_filter — 规则筛选
 
-从打分结果中按规则集筛出精读语料库（目标 1,000–2,000 篇）。每个人维护自己的规则文件，最终取交集。
+从打分结果中按规则集筛出精读语料库（目标 1,000–2,000 篇）。五套独立筛选器，结构上类似 MAGI——保留分歧信息，不强行合并为单一共识。
 
-- `03_filter/rules/rules_claude.json` — Claude 的规则集，当前产出 2,354 篇
-- `03_filter/rules/rules_jes.json` — jes 的规则集（待写）
-- `03_filter/rules/rules_danchaofan.json` — danchaofan 的规则集（待写）
+**JSON 规则集**（各自独立，双盲设计）：
 
-规则格式见任意现有 JSON 文件，可直接在 `04_read/` 前端的 preset 下拉里加载预览效果。
+| 规则集 | 产出 | 设计思路 |
+|--------|------|----------|
+| `rules_jes.json` | ~6,200 篇（宽松预筛，供 MMR 输入） | 保留规则 + OR，rescue outlier |
+| `rules_claude.json` | ~1,870 篇 | 排除规则 + OR，ig 分层 + mr 硬切 |
+| `rules_codex.json` | ~1,680 篇 | 多条件复合排除 + 7 类 rescue |
+| `rules_danchaofan.json` | ~2,030 篇 | 多维度联合排除 |
 
-**待完成**：基于 `03_filter/distribution_conclusions.json` 的分布分析结论，优化各规则集阈值；对精读语料库做数学工具聚类（第三阶段）。
+**Python 筛选器**（超出超矩形的三个机制）：
+
+- `python_filter.py` — 组内百分位排名 + 多信号投票（mr/tn/md 合为一票）+ 维度一致性检测，产出 ~2,030 篇
+
+**语料库分层**：
+
+| 层次 | 论文数 | 含义 |
+|------|--------|------|
+| 5-way 交集（JSON×4 + python） | 851 篇 | 高置信核心，所有方法一致同意 |
+| 4-way JSON 交集 | 961 篇 | JSON 规则全票通过 |
+| `combined_corpus.jsonl` | 1,500 篇 | MMR 最终精读语料库（FLD×0.7 + PCA×0.3，λ=0.5） |
+
+```bash
+# 运行任意筛选器
+uv run python -c "
+import json, sys; sys.path.insert(0, '03_filter')
+from mmr_select import apply_rules
+papers = [json.loads(l)['parsed'] for l in open('data/full/output.jsonl') if json.loads(l).get('ok')]
+cfg = json.loads(open('03_filter/rules/rules_claude.json').read())
+kept = apply_rules(papers, cfg)
+print(len(kept))
+"
+
+# 重新生成 MMR 语料库
+uv run 03_filter/combined_score.py --n 1500 --lam 0.5
+```
+
+设计哲学见 `ourinsights/filter_design_philosophy.md`。
 
 ### 04_read — 浏览与标注
 
 本地 HTTP 服务器 + 单页前端，支持规则预览、收藏、双盲打分。
 
 ```bash
-uv run 04_read/serve.py
+uv run 03_filter/serve.py
 # 浏览器打开 http://localhost:8080
 ```
 
@@ -105,6 +135,9 @@ uv run 04_read/serve.py
 
 ## ourinsights/
 
-横跨流水线的观察和判断放这里，不属于任何单一阶段。当前：
+横跨流水线的观察和判断放这里，不属于任何单一阶段。
 
 - `market_structure_notes.md` — 投稿量 delta/gamma 分析，intact 供给端饱和假说，时间窗口判断
+- `space_analysis_notes.md` — 特征空间分析：双峰结构、维度相关性、集合论筛选的适用边界
+- `selection_methodology.md` — 筛选方法论：FLD/PCA/MMR 设计、综合评分推导、Monte Carlo ensemble
+- `filter_design_philosophy.md` — 筛选设计哲学：三个超出超矩形机制的认识论依据、MAGI 结构的意义

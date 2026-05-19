@@ -71,6 +71,6 @@
 ---
 
 ## TODO
-- [ ] 运行 PCA，量化各主成分的方差贡献（确认3轴假说）
-- [ ] 写 rules_jes.json（保留规则 + OR 逻辑，利用 tn/md 救 outlier）
-- [ ] 三规则集粗筛后改用综合评分排名，不再靠阈值微调凑数量
+- [x] 运行 PCA，量化各主成分的方差贡献（PC1 57.6% / PC2 13.4% / PC3 10.7%，见 selection_methodology.md）
+- [x] 写 rules_jes.json（保留规则 + OR 逻辑，利用 tn/md 救 outlier）
+- [x] 三规则集粗筛后改用综合评分排名（FLD×0.7 + PCA×0.3，MMR ensemble，见 combined_score.py）

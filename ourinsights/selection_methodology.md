@@ -153,4 +153,4 @@ combined = 0.7 × norm(fld) + 0.3 × norm(pca)
 - [x] 生成最终语料库 combined_corpus.jsonl（1500篇）
 - [x] 规则引擎软件工程审查：修复 AND 规则 NA 处理 bug，对齐三套引擎语义，补全测试
 - [ ] 确定 λ（当前 0.5，人工浏览语料库后调整）
-- [ ] danchaofan 确认规则后重跑 combined_score.py
+- [x] danchaofan 确认规则（R4 修复，R8 删除），combined_score.py 已重跑
